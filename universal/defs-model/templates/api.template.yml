@@ -1,0 +1,13 @@
+# IF定義 模板 → ApiClient / req-res mapper / mock / API测试
+id: API0100
+name: 検索API
+definition_const: Api0100ApiDefinition   # 代码里用常量，不写字面 endpoint
+method: POST
+request:
+  - field: keyword     type: string   length: 40   required: false
+  - field: page        type: int      required: true
+response:
+  - field: items       type: array
+  - field: totalCount  type: int
+errors:
+  - code: E001   when: 業務エラー条件   message_key: msg.api0100.e001

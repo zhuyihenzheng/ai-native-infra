@@ -1,0 +1,16 @@
+# 画面項目定義 模板 → FormBean / 校验 / 画面项目 / 边界测试
+id: SCR0100
+name: 一覧画面
+spec: docs/specs/screens/SCR0100.md   # 指向行为契约（式样书）
+derives: [FormBean, validation, screen-items, boundary-testcases]
+items:
+  - field: keyword
+    label: 検索キーワード
+    type: string
+    length: 40
+    required: false
+  - field: statusCode
+    label: ステータス
+    type: code
+    code: EXAMPLE_STATUS    # 名称取 list-master
+    required: true          # → @NotBlank + 必須テストケース

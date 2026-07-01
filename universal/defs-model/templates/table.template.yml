@@ -1,0 +1,15 @@
+# DB定義 模板 → Entity / ResultMap / Mapper / 桁·型测试
+table: T_EXAMPLE
+entity: Example
+id: EXAMPLE-DB-001          # traceability ID
+columns:
+  - col: EXAMPLE_NO         # 物理列名
+    field: exampleNo        # → 实体字段（本项目命名约定）
+    type: CHAR(10)
+    pk: true
+    nullable: false
+  - col: STATUS
+    field: statusCode
+    type: CHAR(2)
+    nullable: false
+    code: EXAMPLE_STATUS    # → code-master.yml（名称取 list-master，不硬编码）
