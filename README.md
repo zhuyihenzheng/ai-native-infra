@@ -51,9 +51,11 @@ cp -r ai-native-infra  /path/to/your-project/ai-infra
 bash ai-infra/tools/aci.sh state
 bash ai-infra/tools/aci.sh verify
 
-# Windows (no Git Bash needed): every script has a PowerShell 5.1-compatible twin
-#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 state
-#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/activate/promote.ps1
+# Windows (no Git Bash needed): .cmd wrappers embed -ExecutionPolicy Bypass,
+# avoiding "not digitally signed" execution-policy errors (GPO AllSigned aside)
+#   ai-infra\tools\aci.cmd state
+#   ai-infra\activate\promote.cmd
+# Troubleshooting (Unblock-File, GPO AllSigned): see universal/aci/README.md
 
 # Template maintainers can run the deployed-mode smoke suites
 bash tools/smoke-aci.sh

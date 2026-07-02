@@ -51,9 +51,11 @@ cp -r ai-native-infra  /path/to/your-project/ai-infra
 bash ai-infra/tools/aci.sh state
 bash ai-infra/tools/aci.sh verify
 
-# Windows（无需 Git Bash）：每个脚本都有 PowerShell 5.1 兼容的对应版
-#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 state
-#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/activate/promote.ps1
+# Windows（无需 Git Bash）：.cmd 包装器内置 -ExecutionPolicy Bypass，
+# 避免「デジタル署名されていません／未经数字签名」类执行策略报错（组策略 AllSigned 除外）
+#   ai-infra\tools\aci.cmd state
+#   ai-infra\activate\promote.cmd
+# 排障（Unblock-File、组策略 AllSigned）见 universal/aci/README.md
 
 # 模板维护者可跑部署模式冒烟测试
 bash tools/smoke-aci.sh

@@ -17,8 +17,8 @@ slash: aci-task-loop
 bash ai-infra/tools/aci.sh state
 ```
 
-（Windows 环境把本文所有 `bash ai-infra/tools/aci.sh` 替换为
-`powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1`。）
+（Windows 环境把本文所有 `bash ai-infra/tools/aci.sh` 替换为 `ai-infra\tools\aci.cmd`；
+执行策略报错的排障见 `ai-infra/universal/aci/README.md`。）
 
 确认：
 

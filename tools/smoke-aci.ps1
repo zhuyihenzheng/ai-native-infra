@@ -120,7 +120,7 @@ function Check-PromotePaths([string]$Project, [string]$InfraName) {
 
   foreach ($f in @('CLAUDE.md', 'AGENTS.md', '.github/prompts/aci-task-loop.prompt.md')) {
     $t = Get-Content -LiteralPath (Join-Path $Project $f) -Raw -Encoding UTF8
-    Check-Contains $t "$InfraName/tools/aci.ps1" "$InfraName promote output $f uses aci.ps1"
+    Check-Contains $t "$InfraName\tools\aci.cmd" "$InfraName promote output $f uses aci.cmd wrapper"
     Check-NotContains $t '{{ACI}}' "$InfraName promote output $f has no {{ACI}} leftover"
     Check-NotContains $t '{{INFRA_DIR}}' "$InfraName promote output $f has no {{INFRA_DIR}} leftover"
   }

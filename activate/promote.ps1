@@ -30,8 +30,10 @@ $RulesFile  = Join-Path $ProjectDir 'aligned-rules.md'
 $Ts = Get-Date -Format 'yyyyMMdd-HHmmss'
 $Backup = Join-Path $InfraDir "_backup-$Ts"
 
-# 装配出的入口文件里，ACI 的调用形式按本 OS 生成（Windows 用 powershell -File）
-$AciInvoke = "powershell -NoProfile -ExecutionPolicy Bypass -File $InfraRel/tools/aci.ps1"
+# 装配出的入口文件里，ACI 的调用形式按本 OS 生成。
+# Windows 用 .cmd 包装器：cmd.exe 和 PowerShell 里都能直接跑，内置 -ExecutionPolicy Bypass，
+# 避免「デジタル署名されていません／未经数字签名」类执行策略报错（组策略强制 AllSigned 除外，见 universal/aci/README.md）。
+$AciInvoke = "$InfraRel\tools\aci.cmd"
 
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 

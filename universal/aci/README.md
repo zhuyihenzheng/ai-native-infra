@@ -38,17 +38,31 @@ bash ai-infra/tools/aci.sh view src/main/java/.../Xxx.java 1 100
 
 ## Windows
 
-每个脚本都有同名 PowerShell 版（`aci.ps1` / `validate-ai-docs.ps1` / `promote.ps1`），兼容 Windows 自带的 PowerShell 5.1（UTF-8 BOM，不依赖 pwsh 7）：
+每个脚本都有同名 PowerShell 版（`aci.ps1` / `validate-ai-docs.ps1` / `promote.ps1`），兼容 Windows 自带的 PowerShell 5.1（UTF-8 BOM，不依赖 pwsh 7）。**推荐用 `.cmd` 包装器调用**——cmd.exe 和 PowerShell 里都能直接跑，内置 `-ExecutionPolicy Bypass`：
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 state
-powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 verify
+```bat
+ai-infra\tools\aci.cmd state
+ai-infra\tools\aci.cmd verify
+ai-infra\activate\promote.cmd
 ```
 
+等价的完整形式：`powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 state`。
+
 约定：
-- 入口文件里的 ACI 调用形式由 promote 按**运行 promote 的 OS** 展开（`{{ACI}}` 占位符）：macOS/Linux 跑 `promote.sh` 得到 `bash .../aci.sh`，Windows 跑 `promote.ps1` 得到 `powershell -File .../aci.ps1`。**换 OS 后重跑对应 promote 重新装配**。
+- 入口文件里的 ACI 调用形式由 promote 按**运行 promote 的 OS** 展开（`{{ACI}}` 占位符）：macOS/Linux 跑 `promote.sh` 得到 `bash .../aci.sh`，Windows 跑 `promote.ps1` 得到 `...\tools\aci.cmd`。**换 OS 后重跑对应 promote 重新装配**。
 - 验证入口同理成对：`project/verify.sh`（macOS/Linux）/ `project/verify.ps1`（Windows）。`aci.ps1 verify` 优先跑 `verify.ps1`，没有时若装了 Git Bash 会回退跑 `verify.sh`。
 - 装了 Git Bash 的 Windows 机器也可以直接用 `.sh` 全家（`bash ai-infra/tools/aci.sh ...`），两条路等价。
+
+### 排障：「デジタル署名されていません／此脚本未经数字签名，无法在当前系统上运行」
+
+这是 PowerShell 执行策略在拦截，先跑 `Get-ExecutionPolicy -List` 看三种情况落在哪：
+
+1. **直接跑了 `.\aci.ps1`（没带 Bypass）**，且策略是 Restricted/AllSigned → 改用 `ai-infra\tools\aci.cmd`（或完整 Bypass 调用）即可。
+2. **文件带「来自互联网」标记（Mark of the Web）**——从 GitHub 下载 ZIP 解压会这样，`git clone` 不会。解除标记（合法操作，只是去掉下载标签）：
+   ```powershell
+   Get-ChildItem -Recurse ai-infra -Include *.ps1,*.cmd | Unblock-File
+   ```
+3. **`Get-ExecutionPolicy -List` 里 MachinePolicy / UserPolicy 显示 AllSigned**（公司组策略强制）→ `Bypass` 参数会被组策略压制，`.cmd` 包装器也无效。这属于公司安全策略，**不要绕过**：改用 Git Bash 跑 `.sh` 全家（`bash ai-infra/tools/aci.sh ...`，与 ps1 等价），或请 IT 对脚本签名/加白名单。
 
 ## 部署与作用域
 
