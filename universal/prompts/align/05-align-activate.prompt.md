@@ -34,6 +34,7 @@ bash ai-infra/activate/promote.sh
 
 ## 校验
 - 跑 `bash ai-infra/tools/validate-ai-docs.sh`。
+- 跑 `bash ai-infra/tools/aci.sh state`，确认 live entry files 已生成、git status 可解释。
 - 抽查生成的根 `CLAUDE.md` / `.github/copilot-instructions.md`：核心契约在、无占位符、证据链在。
 
 ## 完成

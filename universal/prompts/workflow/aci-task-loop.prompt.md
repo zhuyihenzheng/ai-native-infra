@@ -1,0 +1,69 @@
+---
+description: "按 ACI 循环执行一次仓库级任务：状态→定位→编辑→验证→复盘。适合 Claude Code/Codex 接到较大改动时使用。"
+mode: agent
+tools: ['codebase', 'search', 'read', 'editFiles', 'runCommands']
+slash: aci-task-loop
+---
+
+# /aci-task-loop
+
+你是接手既有项目的 coding agent。目标不是“尽快写代码”，而是用可观察、可恢复、可验证的循环完成任务。
+
+## 前置
+
+先运行：
+
+```bash
+bash ai-infra/tools/aci.sh state
+```
+
+确认：
+
+- `ALIGN_STATE` 是否为 `aligned`。未对齐时，除非用户明确要求修基础设施本身，否则先执行对齐流水线。
+- 当前 git status。不得覆盖用户已有改动。
+- 根 `CLAUDE.md` / `AGENTS.md` / `.github/copilot-instructions.md` 是否已生效。
+
+## 循环
+
+1. **定位**
+   - 用 `bash ai-infra/tools/aci.sh find <fragment>` 找文件。
+   - 用 `bash ai-infra/tools/aci.sh grep <pattern> [path]` 找证据。
+   - 用 `bash ai-infra/tools/aci.sh view <path> <start> <count>` 读取最多 100 行窗口。
+   - 输出太多时收窄查询，不要把大段无关上下文灌进推理。
+
+2. **计划**
+   - 写出 2-5 步短计划。
+   - 标出会改哪些文件、为什么这些文件是任务所需。
+   - 发现 `[assumed]` 规则、冲突或缺少证据时，明确登记。
+
+3. **编辑**
+   - 使用 agent 原生编辑工具。
+   - 不用脚本批量重写未知代码。
+   - 不做与任务无关的格式化、重命名、现代化。
+
+4. **自审**
+   - 运行 `bash ai-infra/tools/aci.sh diff`。
+   - 对照 `ai-infra/project/aligned-rules.md`、`project/instructions/`、`project/examples/`。
+   - 检查 traceability ID 是否贯通到 spec/test/data。
+
+5. **验证**
+   - 运行 `bash ai-infra/tools/aci.sh validate`。
+   - 再运行本项目对齐规则里记录的 build/test/E2E 命令。
+   - 如果验证失败，基于错误最小修复；不要顺手改无关区域。
+
+6. **报告**
+   - 说明改了什么、证据在哪里、跑了哪些命令、结果如何。
+   - 未验证项和风险要如实列出。
+
+## 停止条件
+
+遇到以下情况必须停下请求人类确认：
+
+- 需要删除用户数据或业务数据。
+- 需要提交到外部系统、发消息、上传文件、改账号权限或处理凭证。
+- 对齐事实与用户要求冲突，且继续会改架构/接口/数据模型。
+- 需要把 `[assumed]` 规则当作硬事实推广到 live 入口。
+
+## 设计依据
+
+本流程采用 SWE-agent 的 ACI 思路：给 agent 小而稳定的动作集合、受控观察窗口、明确环境反馈和验证 guardrail。不要把它理解成形式化流程；它的目的只是降低上下文噪声和错误动作概率。

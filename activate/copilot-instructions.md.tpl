@@ -6,5 +6,7 @@ GitHub Copilot 在本项目工作时遵守下方"核心契约"。详细的各层
 
 **最高优先级**：本项目实测事实 > 通用默认。标 `[assumed]` 的规则需人确认。
 
+仓库观察和验证优先使用 `bash {{INFRA_DIR}}/tools/aci.sh ...`。它提供 bounded search/view/diff/validate，避免 Copilot Chat 被无关 shell 输出污染。
+
 ---
 （核心契约见下）

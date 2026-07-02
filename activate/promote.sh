@@ -99,7 +99,10 @@ if compgen -G "$PROJECT_DIR/instructions/*.instructions.md" > /dev/null; then
 fi
 # 工作流 prompts（Copilot slash）
 if compgen -G "$INFRA_DIR/universal/prompts/workflow/*.prompt.md" > /dev/null; then
-  cp "$INFRA_DIR"/universal/prompts/workflow/*.prompt.md "$PROJECT_ROOT/.github/prompts/"; echo "  拷 workflow prompts"
+  for src in "$INFRA_DIR"/universal/prompts/workflow/*.prompt.md; do
+    sed "s#{{INFRA_DIR}}#$INFRA_REL#g; s#ai-infra/#$INFRA_REL/#g" "$src" > "$PROJECT_ROOT/.github/prompts/$(basename "$src")"
+  done
+  echo "  生成 workflow prompts"
 fi
 
 # ---- .vscode/settings.json 合并（开 Copilot 开关）----

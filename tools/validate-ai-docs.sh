@@ -9,6 +9,7 @@ PROJECT_ROOT="$(cd "$INFRA_DIR/.." && pwd)"
 ERR=0
 warn(){ echo "✗ $1"; ERR=1; }
 ok(){ echo "✓ $1"; }
+rel(){ printf '%s\n' "${1#"$INFRA_DIR"/}"; }
 
 echo "== 1. 必需文件存在 =="
 for f in \
@@ -16,9 +17,25 @@ for f in \
   "$INFRA_DIR/project/ALIGN-STATUS.md" \
   "$INFRA_DIR/project/aligned-rules.md" \
   "$INFRA_DIR/activate/promote.sh" \
+  "$INFRA_DIR/tools/aci.sh" \
+  "$INFRA_DIR/tools/smoke-aci.sh" \
+  "$INFRA_DIR/universal/aci/README.md" \
   "$INFRA_DIR/universal/maps/traceability.md"; do
-  [ -f "$f" ] && ok "$(basename "$f")" || warn "缺文件 $f"
+  [ -f "$f" ] && ok "$(rel "$f")" || warn "缺文件 $f"
 done
+
+[ -x "$INFRA_DIR/tools/aci.sh" ] && ok "aci.sh 可执行" || warn "aci.sh 不可执行：请 chmod +x tools/aci.sh"
+[ -x "$INFRA_DIR/tools/smoke-aci.sh" ] && ok "smoke-aci.sh 可执行" || warn "smoke-aci.sh 不可执行：请 chmod +x tools/smoke-aci.sh"
+if bash -n "$INFRA_DIR/tools/aci.sh"; then
+  ok "aci.sh 语法通过"
+else
+  warn "aci.sh 语法错误"
+fi
+if bash -n "$INFRA_DIR/tools/smoke-aci.sh"; then
+  ok "smoke-aci.sh 语法通过"
+else
+  warn "smoke-aci.sh 语法错误"
+fi
 
 # 对齐状态（与 promote.sh 同一机器标记；只读第一处，避免 prose 干扰）
 STATUS_FILE="$INFRA_DIR/project/ALIGN-STATUS.md"

@@ -44,6 +44,12 @@ cp -r ai-native-infra  /path/to/your-project/ai-infra
 /align-draft      # specialize universal rule templates → _staging/ drafts
 /align-review     # tag confirmed / assumed; you only vet the "assumed" items
 /align-activate   # promote.sh assembles & enables the live entry files
+
+# Optional sanity check for the agent-facing interface
+bash ai-infra/tools/aci.sh state
+
+# Template maintainers can run the deployed-mode smoke suite
+bash tools/smoke-aci.sh
 ```
 
 Before activation your project's existing `.github/copilot-instructions.md` (if any) is left untouched; `promote.sh` **backs it up** before writing.
@@ -60,10 +66,11 @@ All three share **one** core contract (`project/aligned-rules.md`) — assembled
 
 ## What it supports
 
+- **Agent-Computer Interface (ACI)** — SWE-agent-inspired, LM-friendly repo commands for bounded search/view/trace/diff/validate. Agents use `tools/aci.sh` for observation and guardrails before relying on raw shell output. See `universal/aci/`.
 - **DEF ベース development** — machine-readable *structure* contracts (DB / screen / API / code / message definitions as YAML) that deterministically drive entity, mapper, form, validation, and boundary-test generation. See `universal/defs-model/`.
 - **式様書 (spec)-driven development** — human-readable *behavior* contracts drive routing, business flow, screen transitions, and behavior tests.
 - **Traceability** — stable `{TARGET}-{TYPE}-{NUMBER}` IDs link DEF/spec → test case → executable test → fixture, so an agent can compute the blast radius of any change.
-- **Workflows** — `spec-to-code`, `spec-to-testcases`, `testcases-to-data`, `testcases-to-junit`, `code-review` (in `universal/prompts/workflow/`).
+- **Workflows** — `aci-task-loop`, `spec-to-code`, `spec-to-testcases`, `testcases-to-data`, `testcases-to-junit`, `code-review` (in `universal/prompts/workflow/`).
 
 ## Anti-drift guardrails
 
@@ -71,6 +78,7 @@ All three share **one** core contract (`project/aligned-rules.md`) — assembled
 - **Confidence tags** — each rule is `[confirmed]` (code-backed) or `[assumed]` (template default, needs sign-off); agents flag `assumed` when they rely on it.
 - **Precedence** — *measured project facts > generic template defaults*, stated explicitly.
 - **Activation gate** — `promote.sh` refuses unless `ALIGN_STATE: aligned`, refuses to run against a non-Java directory, and always backs up existing config first.
+- **Bounded observation** — `tools/aci.sh` gives agents capped search/view/diff output and explicit empty-output feedback, following the ACI lesson from SWE-agent.
 
 ## Layout
 
@@ -79,6 +87,7 @@ ai-native-infra/
 ├── universal/            # reusable, no alignment needed
 │   ├── prompts/align/     #   ★ the 5-step alignment pipeline
 │   ├── prompts/workflow/  #   spec→code / →testcases / →data / →junit / code-review
+│   ├── aci/               #   Agent-Computer Interface guidance
 │   ├── rules-templates/   #   rule templates with {{placeholders}}
 │   ├── testing/  defs-model/  maps/traceability.md
 ├── project/              # ★ per-project alignment output (starts as placeholders)
@@ -96,6 +105,10 @@ Each project gets its **own** `project/` (its own facts). A new project = copy t
 ## Language
 
 Rule/spec content is authored in **Chinese/Japanese** (the target audience is Japanese-enterprise SIer teams doing DEF ベース / 式様書 development). This README is English for discoverability; the mechanism is language-agnostic.
+
+## Research note
+
+The ACI layer is informed by [SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering](https://arxiv.org/abs/2405.15793). The practical takeaway used here is narrow: agent-facing interfaces should provide simple commands, concise feedback, bounded file views/search results, and guardrails around invalid states. This repo applies that idea to brownfield alignment and enterprise Java workflows rather than trying to vendor SWE-agent itself.
 
 ## License
 
