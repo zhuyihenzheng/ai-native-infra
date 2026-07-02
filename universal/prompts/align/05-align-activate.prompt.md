@@ -16,12 +16,14 @@ slash: align-activate
 
 ## 执行
 
-**第 0 步：固化验证入口。** 把 `PROJECT-FACTS.md` §构建/验证命令固化成可执行的 `project/verify.sh`（无占位符；含 JDK/工具链选择等本机事实；只做只读构建/测试，不改代码不发布）。写完跑一次 `bash ai-infra/tools/aci.sh verify` 确认真的通过——这是 agent 以后收尾的一键门禁。
+**第 0 步：固化验证入口。** 把 `PROJECT-FACTS.md` §构建/验证命令固化成可执行的 `project/verify.sh`（macOS/Linux）或 `project/verify.ps1`（Windows）——无占位符；含 JDK/工具链选择等本机事实；只做只读构建/测试，不改代码不发布。写完跑一次 `bash ai-infra/tools/aci.sh verify`（Windows: `powershell -File ai-infra/tools/aci.ps1 verify`）确认真的通过——这是 agent 以后收尾的一键门禁。
 
-然后运行装配脚本（它负责备份 + 装配 + 开关）：
+然后运行装配脚本（它负责备份 + 装配 + 开关；按当前 OS 选，入口文件里的 ACI 调用形式会随之生成）：
 
 ```bash
 bash ai-infra/activate/promote.sh
+# Windows:
+# powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/activate/promote.ps1
 ```
 
 脚本会：

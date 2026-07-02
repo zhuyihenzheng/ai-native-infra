@@ -10,7 +10,7 @@
 - 生成新代码前，参照对应层的真实样例：`{{INFRA_DIR}}/project/examples/`。
 - 标 `[assumed]` 的规则是模板默认、尚未被代码证实，按它行事时要标注、留给人确认。
 - 可复用任务工作流在 `{{INFRA_DIR}}/universal/prompts/workflow/`。
-- ACI 门禁：开工 `bash {{INFRA_DIR}}/tools/aci.sh state`；收尾 `verify`（对齐的 build/test 一键验证）+ `validate`；溯源用 `trace <ID>`、证据核查用 `evidence <path:line>`。观察仓库优先用你自带的搜索/读取能力；没有时才用 `aci.sh find/grep/view`（输出受控）。
+- ACI 门禁：开工 `{{ACI}} state`；收尾 `verify`（对齐的 build/test 一键验证）+ `validate`；溯源用 `trace <ID>`、证据核查用 `evidence <path:line>`。观察仓库优先用你自带的搜索/读取能力；没有时才用 ACI 的 `find/grep/view`（输出受控）。
 - 安全：所有 fixture 用合成数据，禁止写入真实个人信息/凭证/客户数据。
 
 ---

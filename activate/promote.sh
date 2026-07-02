@@ -75,8 +75,10 @@ echo "==> 已有配置备份到: $BACKUP"
 mkdir -p "$PROJECT_ROOT/.github/instructions" "$PROJECT_ROOT/.github/prompts" "$PROJECT_ROOT/.vscode"
 
 # ---- 装配工具: 用 .tpl 头 + aligned-rules.md 体 ----
+# {{ACI}} 按本 OS 展开为 ACI 调用形式（Windows 侧由 promote.ps1 展开为 powershell -File）
+ACI_INVOKE="bash $INFRA_REL/tools/aci.sh"
 assemble () {  # $1=模板 $2=输出
-  { sed "s#{{INFRA_DIR}}#$INFRA_REL#g" "$1"; echo; echo "<!-- ↓↓↓ 由 project/aligned-rules.md 装配，请勿手改本文件；改源后重跑 promote.sh ↓↓↓ -->"; echo; cat "$RULES"; } > "$2"
+  { sed "s#{{INFRA_DIR}}#$INFRA_REL#g; s#{{ACI}}#$ACI_INVOKE#g" "$1"; echo; echo "<!-- ↓↓↓ 由 project/aligned-rules.md 装配，请勿手改本文件；改源后重跑 promote.sh ↓↓↓ -->"; echo; cat "$RULES"; } > "$2"
   echo "  生成 $2"
 }
 

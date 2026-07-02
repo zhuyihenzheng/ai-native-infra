@@ -6,7 +6,7 @@ GitHub Copilot 在本项目工作时遵守下方"核心契约"。详细的各层
 
 **最高优先级**：本项目实测事实 > 通用默认。标 `[assumed]` 的规则需人确认。
 
-机器门禁：任务开始运行 `bash {{INFRA_DIR}}/tools/aci.sh state`，结束前运行 `verify`（本项目对齐的 build/test）与 `validate`；`trace`/`evidence` 用于溯源与证据核查。仓库观察用你的原生工具即可。
+机器门禁：任务开始运行 `{{ACI}} state`，结束前运行 `verify`（本项目对齐的 build/test）与 `validate`；`trace`/`evidence` 用于溯源与证据核查。仓库观察用你的原生工具即可。
 
 ---
 （核心契约见下）

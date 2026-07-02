@@ -17,7 +17,10 @@ for f in \
   "$INFRA_DIR/project/ALIGN-STATUS.md" \
   "$INFRA_DIR/project/aligned-rules.md" \
   "$INFRA_DIR/activate/promote.sh" \
+  "$INFRA_DIR/activate/promote.ps1" \
   "$INFRA_DIR/tools/aci.sh" \
+  "$INFRA_DIR/tools/aci.ps1" \
+  "$INFRA_DIR/tools/validate-ai-docs.ps1" \
   "$INFRA_DIR/tools/smoke-aci.sh" \
   "$INFRA_DIR/universal/aci/README.md" \
   "$INFRA_DIR/universal/maps/traceability.md"; do

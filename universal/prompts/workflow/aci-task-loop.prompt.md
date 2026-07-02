@@ -17,6 +17,9 @@ slash: aci-task-loop
 bash ai-infra/tools/aci.sh state
 ```
 
+（Windows 环境把本文所有 `bash ai-infra/tools/aci.sh` 替换为
+`powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1`。）
+
 确认：
 
 - `ALIGN_STATE` 是否为 `aligned`。未对齐时，除非用户明确要求修基础设施本身，否则先执行对齐流水线。

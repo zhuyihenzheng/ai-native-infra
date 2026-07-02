@@ -51,8 +51,13 @@ cp -r ai-native-infra  /path/to/your-project/ai-infra
 bash ai-infra/tools/aci.sh state
 bash ai-infra/tools/aci.sh verify
 
-# Template maintainers can run the deployed-mode smoke suite
+# Windows (no Git Bash needed): every script has a PowerShell 5.1-compatible twin
+#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 state
+#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/activate/promote.ps1
+
+# Template maintainers can run the deployed-mode smoke suites
 bash tools/smoke-aci.sh
+pwsh -NoProfile -File tools/smoke-aci.ps1
 ```
 
 Before activation your project's existing `.github/copilot-instructions.md` (if any) is left untouched; `promote.sh` **backs it up** before writing.
@@ -98,8 +103,10 @@ ai-native-infra/
 │   ├── instructions/  examples/
 ├── _staging/             # review buffer
 ├── activate/             # entry-file shells (*.tpl) + promote.sh + settings snippet
-└── tools/validate-ai-docs.sh  aci.sh  smoke-aci.sh
+└── tools/validate-ai-docs.sh  aci.sh  smoke-aci.sh   (+ .ps1 twins for Windows)
 ```
+
+**Windows:** `aci.ps1` / `validate-ai-docs.ps1` / `promote.ps1` mirror the shell scripts and run on stock Windows PowerShell 5.1. `promote` expands the `{{ACI}}` placeholder in entry-file templates to the OS-appropriate invocation, so entry files always show runnable commands — re-run the matching promote after switching OS. The per-project verification entry is likewise a pair: `project/verify.sh` / `project/verify.ps1`.
 
 ## New project vs. existing project
 

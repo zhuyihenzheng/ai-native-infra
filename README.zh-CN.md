@@ -51,8 +51,13 @@ cp -r ai-native-infra  /path/to/your-project/ai-infra
 bash ai-infra/tools/aci.sh state
 bash ai-infra/tools/aci.sh verify
 
+# Windows（无需 Git Bash）：每个脚本都有 PowerShell 5.1 兼容的对应版
+#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 state
+#   powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/activate/promote.ps1
+
 # 模板维护者可跑部署模式冒烟测试
 bash tools/smoke-aci.sh
+pwsh -NoProfile -File tools/smoke-aci.ps1
 ```
 
 激活之前，你项目里已有的 `.github/copilot-instructions.md`（如果有）不会被碰；`promote.sh` 写入前会先**备份**。
@@ -98,8 +103,10 @@ ai-native-infra/
 │   ├── instructions/  examples/
 ├── _staging/             # review 中转区
 ├── activate/             # 入口文件外壳（*.tpl）+ promote.sh + settings 片段
-└── tools/validate-ai-docs.sh  aci.sh  smoke-aci.sh
+└── tools/validate-ai-docs.sh  aci.sh  smoke-aci.sh   （+ 各自的 .ps1 Windows 对应版）
 ```
+
+**Windows：** `aci.ps1` / `validate-ai-docs.ps1` / `promote.ps1` 与 shell 脚本一一对应，直接跑在 Windows 自带的 PowerShell 5.1 上。promote 会把入口文件模板里的 `{{ACI}}` 占位符展开为当前 OS 的可运行调用形式（macOS/Linux 得到 `bash .../aci.sh`，Windows 得到 `powershell -File .../aci.ps1`）——换 OS 后重跑对应的 promote 即可。每个项目的验证入口同样成对：`project/verify.sh` / `project/verify.ps1`。
 
 ## 新项目 vs 已有项目
 

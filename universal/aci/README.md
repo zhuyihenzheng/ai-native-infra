@@ -36,6 +36,20 @@ bash ai-infra/tools/aci.sh view src/main/java/.../Xxx.java 1 100
 
 **有原生搜索/读取工具的 agent（Claude Code、Codex、Copilot agent mode）不要用这些**，用原生工具更快、更省上下文。它们只服务 shell-only 的弱环境（CI 里的裸脚本 agent、无工具的对话式使用），输出同样有界、空结果显式返回成功。
 
+## Windows
+
+每个脚本都有同名 PowerShell 版（`aci.ps1` / `validate-ai-docs.ps1` / `promote.ps1`），兼容 Windows 自带的 PowerShell 5.1（UTF-8 BOM，不依赖 pwsh 7）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 state
+powershell -NoProfile -ExecutionPolicy Bypass -File ai-infra/tools/aci.ps1 verify
+```
+
+约定：
+- 入口文件里的 ACI 调用形式由 promote 按**运行 promote 的 OS** 展开（`{{ACI}}` 占位符）：macOS/Linux 跑 `promote.sh` 得到 `bash .../aci.sh`，Windows 跑 `promote.ps1` 得到 `powershell -File .../aci.ps1`。**换 OS 后重跑对应 promote 重新装配**。
+- 验证入口同理成对：`project/verify.sh`（macOS/Linux）/ `project/verify.ps1`（Windows）。`aci.ps1 verify` 优先跑 `verify.ps1`，没有时若装了 Git Bash 会回退跑 `verify.sh`。
+- 装了 Git Bash 的 Windows 机器也可以直接用 `.sh` 全家（`bash ai-infra/tools/aci.sh ...`），两条路等价。
+
 ## 部署与作用域
 
 在模板仓库自身开发时，脚本自动把当前仓库当作 project root。复制进业务项目后（通常命名为 `ai-infra/`，也可改名），脚本自动把 infra 目录的父目录当作 project root。特殊布局可用 `ACI_PROJECT_ROOT=/path/to/project` 覆盖。
