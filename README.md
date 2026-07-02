@@ -1,5 +1,7 @@
 # AI Native Dev Infrastructure — *alignment-first*
 
+**English** | [简体中文](README.zh-CN.md)
+
 > A tool-neutral scaffold that lets **Claude Code**, **GitHub Copilot**, and **Codex** modify an **existing** Java / Spring Boot / MyBatis codebase **without drifting from that codebase's real conventions**.
 >
 > 一套**工具中立**的 AI 开发基础设施：先让 AI 和已有项目**对齐**，再让 `copilot-instructions.md` 之类的规则生效——避免"规则是模板的假设、代码是项目的事实"导致 AI 跑偏。
@@ -45,8 +47,9 @@ cp -r ai-native-infra  /path/to/your-project/ai-infra
 /align-review     # tag confirmed / assumed; you only vet the "assumed" items
 /align-activate   # promote.sh assembles & enables the live entry files
 
-# Optional sanity check for the agent-facing interface
+# Agent-facing gates: state at task start, verify (aligned build/test) at task end
 bash ai-infra/tools/aci.sh state
+bash ai-infra/tools/aci.sh verify
 
 # Template maintainers can run the deployed-mode smoke suite
 bash tools/smoke-aci.sh
@@ -66,7 +69,7 @@ All three share **one** core contract (`project/aligned-rules.md`) — assembled
 
 ## What it supports
 
-- **Agent-Computer Interface (ACI)** — SWE-agent-inspired, LM-friendly repo commands for bounded search/view/trace/diff/validate. Agents use `tools/aci.sh` for observation and guardrails before relying on raw shell output. See `universal/aci/`.
+- **Agent-Computer Interface (ACI)** — SWE-agent-inspired **domain gates** the agent's harness cannot provide natively: alignment state, one-command project verification (`aci.sh verify` → `project/verify.sh`), doc governance, traceability blast-radius search, and evidence checks. Observation stays on the agent's native tools; `find/grep/view` are kept only as bounded fallbacks for shell-only contexts. See `universal/aci/`.
 - **DEF ベース development** — machine-readable *structure* contracts (DB / screen / API / code / message definitions as YAML) that deterministically drive entity, mapper, form, validation, and boundary-test generation. See `universal/defs-model/`.
 - **式様書 (spec)-driven development** — human-readable *behavior* contracts drive routing, business flow, screen transitions, and behavior tests.
 - **Traceability** — stable `{TARGET}-{TYPE}-{NUMBER}` IDs link DEF/spec → test case → executable test → fixture, so an agent can compute the blast radius of any change.
@@ -78,7 +81,7 @@ All three share **one** core contract (`project/aligned-rules.md`) — assembled
 - **Confidence tags** — each rule is `[confirmed]` (code-backed) or `[assumed]` (template default, needs sign-off); agents flag `assumed` when they rely on it.
 - **Precedence** — *measured project facts > generic template defaults*, stated explicitly.
 - **Activation gate** — `promote.sh` refuses unless `ALIGN_STATE: aligned`, refuses to run against a non-Java directory, and always backs up existing config first.
-- **Bounded observation** — `tools/aci.sh` gives agents capped search/view/diff output and explicit empty-output feedback, following the ACI lesson from SWE-agent.
+- **Machine-run verification** — `tools/aci.sh verify` runs the build/test command captured during alignment (`project/verify.sh`) with bounded output and an explicit ✓/✗, so "it builds" comes from the machine, not from the agent's prose.
 
 ## Layout
 
@@ -95,7 +98,7 @@ ai-native-infra/
 │   ├── instructions/  examples/
 ├── _staging/             # review buffer
 ├── activate/             # entry-file shells (*.tpl) + promote.sh + settings snippet
-└── tools/validate-ai-docs.sh
+└── tools/validate-ai-docs.sh  aci.sh  smoke-aci.sh
 ```
 
 ## New project vs. existing project
@@ -108,7 +111,7 @@ Rule/spec content is authored in **Chinese/Japanese** (the target audience is Ja
 
 ## Research note
 
-The ACI layer is informed by [SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering](https://arxiv.org/abs/2405.15793). The practical takeaway used here is narrow: agent-facing interfaces should provide simple commands, concise feedback, bounded file views/search results, and guardrails around invalid states. This repo applies that idea to brownfield alignment and enterprise Java workflows rather than trying to vendor SWE-agent itself.
+The ACI layer is informed by [SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering](https://arxiv.org/abs/2405.15793) — applied selectively. The paper's *observation* lessons (bounded file views, concise search) are already built into the native tools of 2026 agent harnesses (Claude Code / Codex / Copilot), so this repo does **not** ask agents to route observation through wrappers; that would be a de-optimization. What this repo takes from the paper is the other half: agent-facing interfaces should offer a small set of deterministic, domain-specific actions with explicit feedback and guardrails around invalid states — here that means alignment gates, traceability/evidence checks, and one-command verification, applied to brownfield alignment and enterprise Java workflows rather than vendoring SWE-agent itself.
 
 ## License
 
