@@ -16,7 +16,9 @@ slash: align-activate
 
 ## 执行
 
-运行装配脚本（它负责备份 + 装配 + 开关）：
+**第 0 步：固化验证入口。** 把 `PROJECT-FACTS.md` §构建/验证命令固化成可执行的 `project/verify.sh`（无占位符；含 JDK/工具链选择等本机事实；只做只读构建/测试，不改代码不发布）。写完跑一次 `bash ai-infra/tools/aci.sh verify` 确认真的通过——这是 agent 以后收尾的一键门禁。
+
+然后运行装配脚本（它负责备份 + 装配 + 开关）：
 
 ```bash
 bash ai-infra/activate/promote.sh
@@ -35,6 +37,7 @@ bash ai-infra/activate/promote.sh
 ## 校验
 - 跑 `bash ai-infra/tools/validate-ai-docs.sh`。
 - 跑 `bash ai-infra/tools/aci.sh state`，确认 live entry files 已生成、git status 可解释。
+- 跑 `bash ai-infra/tools/aci.sh verify`，确认一键验证入口绿。
 - 抽查生成的根 `CLAUDE.md` / `.github/copilot-instructions.md`：核心契约在、无占位符、证据链在。
 
 ## 完成

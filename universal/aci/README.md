@@ -1,64 +1,67 @@
 # Agent-Computer Interface (ACI)
 
-> 本层受 SWE-agent 论文启发：软件工程 agent 不应该只面对裸 shell，而应有一组小而稳定、输出受控、带 guardrail 的接口。
+> 本层受 SWE-agent 论文启发，但**不照搬**。论文教训要分两半看，只有一半适合落在本基础设施这一层。
 
-## 为什么需要 ACI
+## 论文教训的正确切分
 
-对齐规则告诉 agent **应该怎样写**；ACI 告诉 agent **怎样和仓库交互**。两者缺一不可：
+SWE-agent（Yang et al., NeurIPS 2024）的结论是给 **harness 构建者**的：当 agent 面对裸 shell 时，LM-friendly 命令、有界输出、明确反馈能显著提升软件工程表现。
 
-- 对齐规则防止风格和架构跑偏。
-- ACI 防止上下文爆炸、误读大文件、无证据改动、验证结果含糊。
+但本基础设施不是 harness——它是被 Claude Code / Codex / Copilot 这些**成熟 harness 消费的配置层**。到 2026 年，这些 harness 的原生工具（有界读取、行号、截断提示、快速仓库搜索）已经内置了论文的全部 *observation* 教训。在配置层重造一套 find/grep/view 并要求 agent「优先使用」，只会把 agent 从优化过的原生工具推向更慢的 shell 子进程——这是反优化。
 
-SWE-agent 的关键经验是：面向 LM 的接口设计会显著影响软件工程任务表现。这里不复刻 SWE-agent，而是把它的 ACI 原则落到本基础设施：
+论文教训在**配置层**的正确落点是另一半：**给 agent 提供 harness 不可能自带的、领域特定的确定性动作和验证门禁**，并保证它们输出受控、反馈明确。
 
-1. **少量命令**：观察仓库时优先用固定命令，而不是任意拼 shell。
-2. **有限输出**：搜索、查看、diff 都默认截断并提示细化查询。
-3. **明确反馈**：没有输出也要返回成功消息，避免 agent 把空输出误读成失败。
-4. **验证优先**：promote、validate、traceability 都是独立门禁，不靠口头承诺。
-5. **编辑不混在观察里**：编辑仍用 agent 原生编辑能力；ACI 负责定位、证据、状态和验证。
+## 两类命令
 
-## 标准命令
-
-部署后在目标项目根目录使用：
+### 门禁类（本层的主体价值——harness 原生没有）
 
 ```bash
-bash ai-infra/tools/aci.sh state
+bash ai-infra/tools/aci.sh state           # 对齐状态 + live 入口文件 + git 一览
+bash ai-infra/tools/aci.sh verify          # ★ 一键跑本项目对齐的 build/test（project/verify.sh）
+bash ai-infra/tools/aci.sh validate        # 文档治理校验（证据路径/占位符/泄漏粗检）
+bash ai-infra/tools/aci.sh promote-check   # 生效门禁 dry-run
+bash ai-infra/tools/aci.sh trace API0100-API-001            # traceability 爆炸半径
+bash ai-infra/tools/aci.sh evidence src/.../Xxx.java:42     # 证据引用核查
+bash ai-infra/tools/aci.sh diff            # 改动越界检查
+```
+
+`verify` 是收口命令：对齐流水线把 PROJECT-FACTS 里勘探到的构建/测试命令**固化成可执行的** `project/verify.sh`（含 JDK 选择等本机事实），agent 收尾时一条命令得到确定的 ✓/✗，失败只回显有界尾部输出。「构建命令写成 prose」不算 AI-native；「机器可执行 + 反馈受控」才算。
+
+### 观察类（仅作 fallback）
+
+```bash
 bash ai-infra/tools/aci.sh find OperationLog
 bash ai-infra/tools/aci.sh grep "CommonResult" src/main/java
 bash ai-infra/tools/aci.sh view src/main/java/.../Xxx.java 1 100
-bash ai-infra/tools/aci.sh trace API0100-API-001
-bash ai-infra/tools/aci.sh evidence src/main/java/.../Xxx.java:42
-bash ai-infra/tools/aci.sh diff
-bash ai-infra/tools/aci.sh promote-check
-bash ai-infra/tools/aci.sh validate
 ```
+
+**有原生搜索/读取工具的 agent（Claude Code、Codex、Copilot agent mode）不要用这些**，用原生工具更快、更省上下文。它们只服务 shell-only 的弱环境（CI 里的裸脚本 agent、无工具的对话式使用），输出同样有界、空结果显式返回成功。
+
+## 部署与作用域
 
 在模板仓库自身开发时，脚本自动把当前仓库当作 project root。复制进业务项目后（通常命名为 `ai-infra/`，也可改名），脚本自动把 infra 目录的父目录当作 project root。特殊布局可用 `ACI_PROJECT_ROOT=/path/to/project` 覆盖。
 
-项目级 `find` / `grep` / `trace` 默认排除 infra 目录自身，避免把规则文档当成业务代码证据。要检查基础设施文件时，显式传 scope，例如：
+项目级 `find` / `grep` / `trace` 默认排除 infra 目录自身，避免把规则文档当成业务代码证据。要检查基础设施文件时，显式传 scope：
 
 ```bash
-bash ai-infra/tools/aci.sh find aci ai-infra
 bash ai-infra/tools/aci.sh grep "ALIGN_STATE" ai-infra/project
 ```
 
 ## 给 agent 的工作循环
 
 1. `state`：确认对齐状态、live 入口、git 状态。
-2. `find` / `grep` / `view`：用受控输出定位证据；不要一次性读无关大文件。
+2. **原生工具**定位证据（Grep/Glob/Read 等）；改 spec/DEF 时先 `trace <ID>` 算爆炸半径。
 3. 原生编辑工具：只改与任务直接相关的文件。
 4. `diff`：检查改动是否越界。
-5. `validate` + 项目 build/test：用机器结果收口。
+5. `verify` + `validate`：用机器结果收口，不靠口头承诺。
 6. 结果报告：说明证据、验证命令、剩余风险。
 
-## 论文映射
+## 论文映射（修正后）
 
-| SWE-agent ACI 经验 | 本仓库落点 |
+| SWE-agent ACI 经验 | 2026 年的归属 |
 |---|---|
-| LM-centric commands and feedback | `tools/aci.sh` 固定命令集 |
-| File viewer shows bounded windows | `aci.sh view` 默认最多 100 行 |
-| Directory search returns concise matches | `aci.sh find/grep/trace` 默认最多 50 条 |
-| Guardrails around edits and invalid states | `promote.sh` gate + `validate-ai-docs.sh` + `promote-check` |
-| Concise environment feedback every turn | 空输出成功消息、截断提示、证据行检查 |
+| Bounded file viewer / concise search | **harness 原生工具已内置**——本层不重复，仅留 shell-only fallback |
+| LM-centric commands and feedback | `aci.sh` 门禁命令集：固定动作、✓/✗ 明确反馈、空输出显式成功 |
+| Guardrails around invalid states | `promote.sh` gate + `promote-check` + `validate` + `evidence` |
+| One-command, deterministic verification | `aci.sh verify` → 对齐时固化的 `project/verify.sh` |
 
-参考：Yang et al., “SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering”, NeurIPS 2024 / arXiv:2405.15793.
+参考：Yang et al., "SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering", NeurIPS 2024 / arXiv:2405.15793.

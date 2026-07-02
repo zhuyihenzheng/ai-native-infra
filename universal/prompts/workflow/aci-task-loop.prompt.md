@@ -26,9 +26,9 @@ bash ai-infra/tools/aci.sh state
 ## 循环
 
 1. **定位**
-   - 用 `bash ai-infra/tools/aci.sh find <fragment>` 找文件。
-   - 用 `bash ai-infra/tools/aci.sh grep <pattern> [path]` 找证据。
-   - 用 `bash ai-infra/tools/aci.sh view <path> <start> <count>` 读取最多 100 行窗口。
+   - 优先用你的**原生**搜索/读取工具（如 Claude Code 的 Grep/Glob/Read）——它们已经是有界、带行号的。
+   - 没有原生搜索能力的环境，才用 `bash ai-infra/tools/aci.sh find/grep/view`（输出受控的 fallback）。
+   - 涉及 spec/DEF 变更时，先 `bash ai-infra/tools/aci.sh trace <ID>` 算出爆炸半径。
    - 输出太多时收窄查询，不要把大段无关上下文灌进推理。
 
 2. **计划**
@@ -47,8 +47,9 @@ bash ai-infra/tools/aci.sh state
    - 检查 traceability ID 是否贯通到 spec/test/data。
 
 5. **验证**
-   - 运行 `bash ai-infra/tools/aci.sh validate`。
-   - 再运行本项目对齐规则里记录的 build/test/E2E 命令。
+   - 运行 `bash ai-infra/tools/aci.sh verify`（一键跑对齐时固化的 build/test，见 `project/verify.sh`）。
+   - 缺 `project/verify.sh` 时按 aligned-rules 命令段手跑，并提示用户补齐 verify.sh。
+   - 运行 `bash ai-infra/tools/aci.sh validate`；涉及画面/接口的改动按对齐规则补端到端验证。
    - 如果验证失败，基于错误最小修复；不要顺手改无关区域。
 
 6. **报告**
@@ -66,4 +67,4 @@ bash ai-infra/tools/aci.sh state
 
 ## 设计依据
 
-本流程采用 SWE-agent 的 ACI 思路：给 agent 小而稳定的动作集合、受控观察窗口、明确环境反馈和验证 guardrail。不要把它理解成形式化流程；它的目的只是降低上下文噪声和错误动作概率。
+本流程采用 SWE-agent 的 ACI 思路，但按 2026 年现实切分：受控观察窗口已由主流 harness 原生工具内置（所以定位优先原生工具）；本流程把论文教训用在 harness 给不了的地方——领域门禁（state/trace/evidence）与确定性验证收口（verify/validate）。不要把它理解成形式化流程；它的目的只是降低上下文噪声和错误动作概率。

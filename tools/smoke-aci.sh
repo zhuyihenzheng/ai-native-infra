@@ -95,6 +95,35 @@ check_no_rg_fallback() {
   check_contains "$infra_find" "$infra_name/INFRA-MARKER.txt" "$infra_name fallback explicit infra find"
 }
 
+check_verify() {
+  local project="$1"
+  local infra_name="$2"
+  local aci="$project/$infra_name/tools/aci.sh"
+
+  local out status
+  set +e
+  out="$(bash "$aci" verify 2>&1)"
+  status=$?
+  set -e
+  [ "$status" -ne 0 ] || fail "$infra_name verify: expected failure without project/verify.sh"
+  check_contains "$out" "verify.sh" "$infra_name verify missing-script message"
+
+  printf '#!/usr/bin/env bash\necho smoke-build-ok\n' > "$project/$infra_name/project/verify.sh"
+  out="$(bash "$aci" verify)"
+  check_contains "$out" "smoke-build-ok" "$infra_name verify passthrough output"
+  check_contains "$out" "✓ verify passed" "$infra_name verify success marker"
+
+  printf '#!/usr/bin/env bash\necho boom >&2\nexit 3\n' > "$project/$infra_name/project/verify.sh"
+  set +e
+  out="$(bash "$aci" verify 2>&1)"
+  status=$?
+  set -e
+  [ "$status" -eq 3 ] || fail "$infra_name verify: expected exit 3, got $status"
+  check_contains "$out" "boom" "$infra_name verify failure output"
+  check_contains "$out" "✗ verify failed (exit 3)" "$infra_name verify failure marker"
+  rm -f "$project/$infra_name/project/verify.sh"
+}
+
 check_promote_paths() {
   local project="$1"
   local infra_name="$2"
@@ -117,6 +146,7 @@ run_case() {
   prepare_project "$project" "$infra_name"
   check_aci_scope "$project" "$infra_name"
   check_no_rg_fallback "$project" "$infra_name"
+  check_verify "$project" "$infra_name"
   check_promote_paths "$project" "$infra_name"
   echo "✓ deployed ACI smoke passed for $infra_name"
 }

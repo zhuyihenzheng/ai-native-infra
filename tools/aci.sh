@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# aci.sh — LM-friendly Agent-Computer Interface helpers for deployed ai-infra.
+# aci.sh — domain-specific Agent-Computer Interface for deployed ai-infra.
 #
-# This script intentionally wraps common repo-observation tasks with bounded,
-# predictable output. It is not a replacement for the agent's native editor;
-# use it to locate, inspect, trace, and verify work before/after edits.
+# Primary value: deterministic domain gates the agent harness cannot provide
+# natively — alignment state, one-command project verification, doc governance,
+# traceability search, evidence checks. find/grep/view are bounded fallbacks
+# for shell-only contexts; agents with native search/read tools should prefer
+# those for observation. Editing always uses the agent's native editor.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,22 +52,26 @@ usage() {
   cat <<'USAGE'
 Usage: tools/aci.sh <command> [args]
 
-Commands:
+Domain gates (things your agent harness cannot know natively — use these):
   help                         Show this help.
   state                        Summarize project root, alignment state, live files, git status.
+  verify                       Run this project's aligned build/test entry (project/verify.sh), bounded output.
   validate                     Run ai-infra/tools/validate-ai-docs.sh.
   promote-check                Report activation gates without writing live files.
+  trace <ID>                   Search traceability ID occurrences (change blast radius).
+  evidence <path:line>         Check that an evidence citation resolves to a file line.
+  diff                         Summarize git status and changed files.
+
+Fallback observation (prefer your agent's native search/read tools when it has them):
   find <name-fragment> [path]  Bounded filename search under project root or path.
   grep <pattern> [path]        Bounded text search under project root or path.
   view <path> [start] [count]  Line-numbered bounded file view; default count=100.
-  trace <ID>                   Search traceability ID occurrences.
-  evidence <path:line>         Check that an evidence citation resolves to a file line.
-  diff                         Summarize git status and changed files.
 
 Environment:
   ACI_PROJECT_ROOT             Override target project root.
   ACI_VIEW_LINES               Max lines for view (default 100).
   ACI_SEARCH_HITS              Max results for find/grep/trace (default 50).
+  ACI_VERIFY_TAIL              Max trailing lines shown from verify output (default 60).
 USAGE
 }
 
@@ -334,6 +340,35 @@ cmd_evidence() {
   fi
 }
 
+cmd_verify() {
+  local script="$INFRA_DIR/project/verify.sh"
+  local tail_lines="${ACI_VERIFY_TAIL:-60}"
+  if [ ! -f "$script" ]; then
+    die "missing $INFRA_REL/project/verify.sh — 对齐时应把本项目的 build/test 命令固化成这个脚本（见 /align-activate），否则请按 aligned-rules 命令段手动验证"
+  fi
+  echo "== verify: $INFRA_REL/project/verify.sh (cwd: $PROJECT_ROOT) =="
+  local tmp status count
+  tmp="$(mktemp)"
+  set +e
+  ( cd "$PROJECT_ROOT" && bash "$script" ) > "$tmp" 2>&1
+  status=$?
+  set -e
+  count="$(wc -l < "$tmp" | tr -d ' ')"
+  if [ "$count" -gt "$tail_lines" ]; then
+    echo "…(showing last ${tail_lines}/${count} output lines)"
+    tail -n "$tail_lines" "$tmp"
+  else
+    cat "$tmp"
+  fi
+  rm -f "$tmp"
+  if [ "$status" -eq 0 ]; then
+    echo "✓ verify passed (exit 0)"
+  else
+    echo "✗ verify failed (exit $status)"
+  fi
+  return "$status"
+}
+
 cmd_diff() {
   if ! git -C "$PROJECT_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     die "project root is not a git worktree: $PROJECT_ROOT"
@@ -354,6 +389,7 @@ shift || true
 case "$cmd" in
   help|-h|--help) usage ;;
   state) cmd_state ;;
+  verify) cmd_verify ;;
   validate) bash "$INFRA_DIR/tools/validate-ai-docs.sh" ;;
   promote-check) cmd_promote_check ;;
   find) cmd_find "$@" ;;
