@@ -23,6 +23,9 @@ slash: align-activate
 ```bash
 bash ai-infra/activate/promote.sh
 # Windows: ai-infra\activate\promote.cmd
+# 只用部分工具时（例：仅 Copilot）：
+#   bash ai-infra/activate/promote.sh --tools=copilot
+#   Windows: ai-infra\activate\promote.cmd -Tools copilot
 ```
 
 脚本会：

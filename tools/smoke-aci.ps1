@@ -115,6 +115,17 @@ function Check-Verify([string]$Project, [string]$InfraName) {
 function Check-PromotePaths([string]$Project, [string]$InfraName) {
   Mark-Aligned $Project $InfraName
   $promote = Join-Path (Join-Path (Join-Path $Project $InfraName) 'activate') 'promote.ps1'
+
+  # 工具子集：-Tools copilot 只生成 Copilot 侧，不碰 CLAUDE.md/AGENTS.md
+  $out = @(& $Engine -NoProfile -ExecutionPolicy Bypass -File $promote -Tools cursor 2>&1 | ForEach-Object { "$_" }) -join "`n"
+  if ($LASTEXITCODE -eq 0) { Fail "$InfraName promote.ps1 should reject unknown tool" }
+  $out = @(& $Engine -NoProfile -ExecutionPolicy Bypass -File $promote -Tools copilot 2>&1 | ForEach-Object { "$_" }) -join "`n"
+  if ($LASTEXITCODE -ne 0) { Fail "$InfraName promote.ps1 -Tools copilot failed: $out" }
+  if (Test-Path -LiteralPath (Join-Path $Project 'CLAUDE.md')) { Fail "$InfraName -Tools copilot must not create CLAUDE.md" }
+  if (Test-Path -LiteralPath (Join-Path $Project 'AGENTS.md')) { Fail "$InfraName -Tools copilot must not create AGENTS.md" }
+  if (-not (Test-Path -LiteralPath (Join-Path $Project '.github/copilot-instructions.md'))) { Fail "$InfraName -Tools copilot missing copilot-instructions" }
+  if (-not (Test-Path -LiteralPath (Join-Path $Project '.github/prompts/aci-task-loop.prompt.md'))) { Fail "$InfraName -Tools copilot missing prompts" }
+
   $out = @(& $Engine -NoProfile -ExecutionPolicy Bypass -File $promote 2>&1 | ForEach-Object { "$_" }) -join "`n"
   if ($LASTEXITCODE -ne 0) { Fail "$InfraName promote.ps1 failed: $out" }
 

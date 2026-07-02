@@ -74,6 +74,8 @@ Before activation your project's existing `.github/copilot-instructions.md` (if 
 
 All three share **one** core contract (`project/aligned-rules.md`) — assembled, never hand-copied.
 
+Only using one of them? `promote.sh --tools=copilot` (Windows: `promote.cmd -Tools copilot`) generates just that tool's files and leaves the others untouched.
+
 ## What it supports
 
 - **Agent-Computer Interface (ACI)** — SWE-agent-inspired **domain gates** the agent's harness cannot provide natively: alignment state, one-command project verification (`aci.sh verify` → `project/verify.sh`), doc governance, traceability blast-radius search, and evidence checks. Observation stays on the agent's native tools; `find/grep/view` are kept only as bounded fallbacks for shell-only contexts. See `universal/aci/`.

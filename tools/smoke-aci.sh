@@ -130,6 +130,16 @@ check_promote_paths() {
   mark_aligned "$project" "$infra_name"
   (
     cd "$project"
+    # 工具子集：--tools=copilot 只生成 Copilot 侧，不碰 CLAUDE.md/AGENTS.md
+    if bash "$infra_name/activate/promote.sh" --tools=cursor >/dev/null 2>&1; then
+      fail "$infra_name promote should reject unknown tool"
+    fi
+    bash "$infra_name/activate/promote.sh" --tools=copilot > "$project/promote-copilot.out"
+    [ ! -e CLAUDE.md ] || fail "$infra_name --tools=copilot must not create CLAUDE.md"
+    [ ! -e AGENTS.md ] || fail "$infra_name --tools=copilot must not create AGENTS.md"
+    [ -f .github/copilot-instructions.md ] || fail "$infra_name --tools=copilot missing copilot-instructions"
+    [ -f .github/prompts/aci-task-loop.prompt.md ] || fail "$infra_name --tools=copilot missing prompts"
+
     bash "$infra_name/activate/promote.sh" > "$project/promote-smoke.out"
     grep -F -- "$infra_name/tools/aci.sh" CLAUDE.md AGENTS.md .github/copilot-instructions.md >/dev/null
     grep -F -- "$infra_name/tools/aci.sh" .github/prompts/aci-task-loop.prompt.md >/dev/null

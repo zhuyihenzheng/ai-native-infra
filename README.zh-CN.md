@@ -74,6 +74,8 @@ pwsh -NoProfile -File tools/smoke-aci.ps1
 
 三个工具共享**同一份**核心契约（`project/aligned-rules.md`）——装配而来，绝不手抄。
 
+只用其中一个工具？`promote.sh --tools=copilot`（Windows：`promote.cmd -Tools copilot`）只生成该工具的文件，不碰其他工具的入口。
+
 ## 支持什么
 
 - **Agent-Computer Interface（ACI）** — 受 SWE-agent 启发的**领域门禁**，是 agent 的 harness 原生给不了的：对齐状态、一键项目验证（`aci.sh verify` → `project/verify.sh`）、文档治理校验、traceability 爆炸半径搜索、证据核查。仓库观察仍用 agent 的原生工具；`find/grep/view` 只作为 shell-only 环境的有界 fallback 保留。见 `universal/aci/`。

@@ -4,15 +4,29 @@
 set -euo pipefail
 
 # ---- 路径解析 ----
-# 用法: promote.sh [目标项目根]
-#   不带参数时，目标默认 = ai-infra 的父目录（即「模板已部署进项目」的常规场景）。
-#   带参数时，用显式目标（脱离常规布局时使用）。
+# 用法: promote.sh [--tools=claude,codex,copilot] [目标项目根]
+#   --tools 只生成指定工具的入口文件（默认三个都生成）。例：--tools=copilot
+#   不带目标参数时，目标默认 = ai-infra 的父目录（即「模板已部署进项目」的常规场景）。
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # .../ai-infra/activate
 INFRA_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"                    # .../ai-infra
 INFRA_REL="$(basename "$INFRA_DIR")"
 
-if [ "${1:-}" != "" ]; then
-  PROJECT_ROOT="$(cd "$1" && pwd)"
+TOOLS="claude,codex,copilot"
+TARGET_ARG=""
+for a in "$@"; do
+  case "$a" in
+    --tools=*) TOOLS="${a#--tools=}" ;;
+    --tools)   echo "✗ 用 --tools=copilot 形式（等号连接）"; exit 1 ;;
+    *)         TARGET_ARG="$a" ;;
+  esac
+done
+has_tool() { case ",$TOOLS," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
+for t in $(echo "$TOOLS" | tr ',' ' '); do
+  case "$t" in claude|codex|copilot) ;; *) echo "✗ 未知工具 '$t'（可选: claude,codex,copilot）"; exit 1 ;; esac
+done
+
+if [ "$TARGET_ARG" != "" ]; then
+  PROJECT_ROOT="$(cd "$TARGET_ARG" && pwd)"
   EXPLICIT_TARGET=1
 else
   PROJECT_ROOT="$(cd "$INFRA_DIR/.." && pwd)"               # ai-infra 的父目录
@@ -59,20 +73,28 @@ fi
 if [ ! -f "$RULES" ]; then echo "✗ 缺少 $RULES"; exit 1; fi
 if grep -q '{{' "$RULES"; then echo "✗ $RULES 仍含未替换占位符 {{...}}，中止。"; exit 1; fi
 
-# ---- 备份已有 AI 配置（绝不静默覆盖）----
+echo "==> 生成目标工具: $TOOLS"
+
+# ---- 备份已有 AI 配置（只备份本次会覆盖的；绝不静默覆盖）----
 mkdir -p "$BACKUP"
-for f in CLAUDE.md AGENTS.md .github/copilot-instructions.md; do
+BACK_LIST=""
+has_tool claude  && BACK_LIST="$BACK_LIST CLAUDE.md"
+has_tool codex   && BACK_LIST="$BACK_LIST AGENTS.md"
+has_tool copilot && BACK_LIST="$BACK_LIST .github/copilot-instructions.md"
+for f in $BACK_LIST; do
   if [ -e "$PROJECT_ROOT/$f" ]; then
     mkdir -p "$BACKUP/$(dirname "$f")"; cp -R "$PROJECT_ROOT/$f" "$BACKUP/$f"
     echo "  备份 $f"
   fi
 done
-if [ -d "$PROJECT_ROOT/.github/instructions" ]; then
+if has_tool copilot && [ -d "$PROJECT_ROOT/.github/instructions" ]; then
   cp -R "$PROJECT_ROOT/.github/instructions" "$BACKUP/.github-instructions"; echo "  备份 .github/instructions/"
 fi
 echo "==> 已有配置备份到: $BACKUP"
 
-mkdir -p "$PROJECT_ROOT/.github/instructions" "$PROJECT_ROOT/.github/prompts" "$PROJECT_ROOT/.vscode"
+if has_tool copilot; then
+  mkdir -p "$PROJECT_ROOT/.github/instructions" "$PROJECT_ROOT/.github/prompts" "$PROJECT_ROOT/.vscode"
+fi
 
 # ---- 装配工具: 用 .tpl 头 + aligned-rules.md 体 ----
 # {{ACI}} 按本 OS 展开为 ACI 调用形式（Windows 侧由 promote.ps1 展开为 powershell -File）
@@ -83,35 +105,40 @@ assemble () {  # $1=模板 $2=输出
 }
 
 # CLAUDE.md（根）
-assemble "$SCRIPT_DIR/CLAUDE.md.tpl" "$PROJECT_ROOT/CLAUDE.md"
+if has_tool claude; then
+  assemble "$SCRIPT_DIR/CLAUDE.md.tpl" "$PROJECT_ROOT/CLAUDE.md"
+fi
 # AGENTS.md（根）
-assemble "$SCRIPT_DIR/AGENTS.md.tpl" "$PROJECT_ROOT/AGENTS.md"
-
-# .github/copilot-instructions.md（薄版优先用 project 的，没有则用 tpl+rules）
-if [ -f "$PROJECT_DIR/copilot-instructions.md" ]; then
-  cp "$PROJECT_DIR/copilot-instructions.md" "$PROJECT_ROOT/.github/copilot-instructions.md"
-  echo "  生成 .github/copilot-instructions.md (project 薄版)"
-else
-  assemble "$SCRIPT_DIR/copilot-instructions.md.tpl" "$PROJECT_ROOT/.github/copilot-instructions.md"
+if has_tool codex; then
+  assemble "$SCRIPT_DIR/AGENTS.md.tpl" "$PROJECT_ROOT/AGENTS.md"
 fi
 
-# 层 instructions
-if compgen -G "$PROJECT_DIR/instructions/*.instructions.md" > /dev/null; then
-  cp "$PROJECT_DIR"/instructions/*.instructions.md "$PROJECT_ROOT/.github/instructions/"; echo "  拷 instructions/*"
-fi
-# 工作流 prompts（Copilot slash）
-if compgen -G "$INFRA_DIR/universal/prompts/workflow/*.prompt.md" > /dev/null; then
-  for src in "$INFRA_DIR"/universal/prompts/workflow/*.prompt.md; do
-    sed "s#{{INFRA_DIR}}#$INFRA_REL#g; s#ai-infra/#$INFRA_REL/#g" "$src" > "$PROJECT_ROOT/.github/prompts/$(basename "$src")"
-  done
-  echo "  生成 workflow prompts"
-fi
+if has_tool copilot; then
+  # .github/copilot-instructions.md（薄版优先用 project 的，没有则用 tpl+rules）
+  if [ -f "$PROJECT_DIR/copilot-instructions.md" ]; then
+    cp "$PROJECT_DIR/copilot-instructions.md" "$PROJECT_ROOT/.github/copilot-instructions.md"
+    echo "  生成 .github/copilot-instructions.md (project 薄版)"
+  else
+    assemble "$SCRIPT_DIR/copilot-instructions.md.tpl" "$PROJECT_ROOT/.github/copilot-instructions.md"
+  fi
 
-# ---- .vscode/settings.json 合并（开 Copilot 开关）----
-SNIP="$SCRIPT_DIR/settings.snippet.json"
-DEST="$PROJECT_ROOT/.vscode/settings.json"
-if command -v python3 >/dev/null 2>&1; then
-  python3 - "$DEST" "$SNIP" <<'PY'
+  # 层 instructions
+  if compgen -G "$PROJECT_DIR/instructions/*.instructions.md" > /dev/null; then
+    cp "$PROJECT_DIR"/instructions/*.instructions.md "$PROJECT_ROOT/.github/instructions/"; echo "  拷 instructions/*"
+  fi
+  # 工作流 prompts（Copilot slash）
+  if compgen -G "$INFRA_DIR/universal/prompts/workflow/*.prompt.md" > /dev/null; then
+    for src in "$INFRA_DIR"/universal/prompts/workflow/*.prompt.md; do
+      sed "s#{{INFRA_DIR}}#$INFRA_REL#g; s#{{ACI}}#$ACI_INVOKE#g; s#ai-infra/#$INFRA_REL/#g" "$src" > "$PROJECT_ROOT/.github/prompts/$(basename "$src")"
+    done
+    echo "  生成 workflow prompts"
+  fi
+
+  # ---- .vscode/settings.json 合并（开 Copilot 开关）----
+  SNIP="$SCRIPT_DIR/settings.snippet.json"
+  DEST="$PROJECT_ROOT/.vscode/settings.json"
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$DEST" "$SNIP" <<'PY'
 import json,sys,os
 dest,snip=sys.argv[1],sys.argv[2]
 base=json.load(open(dest)) if os.path.exists(dest) else {}
@@ -119,9 +146,10 @@ base.update(json.load(open(snip)))
 json.dump(base,open(dest,'w'),indent=2,ensure_ascii=False)
 print("  合并 .vscode/settings.json")
 PY
-else
-  echo "  ⚠ 未找到 python3，请手动把 $SNIP 内容并入 $DEST"
+  else
+    echo "  ⚠ 未找到 python3，请手动把 $SNIP 内容并入 $DEST"
+  fi
 fi
 
-echo "==> ✅ 生效完成。三个工具现按本项目对齐规则工作。"
+echo "==> ✅ 生效完成（${TOOLS}）。所选工具现按本项目对齐规则工作。"
 echo "    回滚：从 $BACKUP 恢复。改规则：改 project/ 源后重跑本脚本。"
