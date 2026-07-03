@@ -1,129 +1,85 @@
-# AI Native Dev Infrastructure — *alignment-first*
+# AI Native Java 开发工作台
 
-**English** | [简体中文](README.zh-CN.md)
+一套可复制进任何既存 Java 项目的 AI 开发工作台，面向 **Java / Spring Boot / MyBatis / 日本 SI 式样书驱动开发**。
+让 Claude Code、Codex、GitHub Copilot 在既存企业系统上做到：理解项目 → 调查影响 → 读式样书 → 出实装方针 → 改代码 → 出测试观点与 case → review → **沉淀项目记忆**。
 
-> A tool-neutral scaffold that lets **Claude Code**, **GitHub Copilot**, and **Codex** modify an **existing** Java / Spring Boot / MyBatis codebase **without drifting from that codebase's real conventions**.
->
-> 一套**工具中立**的 AI 开发基础设施：先让 AI 和已有项目**对齐**，再让 `copilot-instructions.md` 之类的规则生效——避免"规则是模板的假设、代码是项目的事实"导致 AI 跑偏。
+## 设计原则
 
-<p align="left">
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
-  <img alt="Tools" src="https://img.shields.io/badge/agents-Claude%20Code%20%7C%20Copilot%20%7C%20Codex-6f42c1">
-  <img alt="Stack" src="https://img.shields.io/badge/target-Spring%20Boot%20%2B%20MyBatis-6db33f">
-</p>
+1. **对齐先行**：AI 的一切产出对齐「本项目实测事实」，不对齐通用惯例。事实带 `路径:行号` 证据，无证据标 `[assumed]` 留人裁决。
+2. **结构与行为分离**：DEF（YAML 定义 = 结构契约）决定字段/型/桁/列映射，AI 照抄；式样书（= 行为契约）决定流程/异常/遷移，AI 判断。
+3. **人卡在关口，不卡在过程**：人只在三个点介入——对齐裁决、実装方針承认、review 定夺；其余步骤 AI 自走。
+4. **记忆是闭环不是文档**：`/remember` 把每个案件的经验分拣进知识库，review 高频指摘会升级成规则；记忆有保洁规则，不无限膨胀。
+5. **一份正本，三工具共享**：规则与流程只写一遍（`ai/` + `.claude/commands/`），三个工具的入口文件都是薄指针——没有装配脚本，没有生成产物，改了立即生效。
 
----
-
-## The problem
-
-Generic AI instruction files (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`) encode **assumptions** — "use a Service layer", "REST controllers", "camelCase entities". A real brownfield project encodes **facts** — maybe it uses `BLogic`, XML mappers, screen-named routes, a legacy base class. Turn the generic rules on before reconciling the two and every AI edit fights the codebase.
-
-**This repo's answer:** the AI instruction files are not hand-written and not turned on by default. They are **built** from your project's *measured facts* by a short alignment pipeline, and only then activated.
-
-## Core idea: `source → align → build`
+## 目录结构
 
 ```
-universal/   (reusable, never edited per-project) ─┐
-project/     (this project's aligned facts)        ─┼─ promote.sh ─▶  LIVE entry files (build artifacts)
-_staging/    (drafts awaiting human review)        ─┘                  ./CLAUDE.md  ./AGENTS.md
-                                                                       .github/copilot-instructions.md
-                                                                       .github/instructions/*.instructions.md
+CLAUDE.md                    # Claude Code 入口（薄：读什么、闸门、命令表、铁律）
+AGENTS.md                    # Codex / 通用代理入口（同源精简版）
+.github/
+├── copilot-instructions.md  # Copilot 入口（薄）
+├── instructions/            # Copilot 分层规则（/onboard 按真实包路径生成）
+└── prompts/                 # Copilot slash（薄指针 → .claude/commands/）
+.claude/
+├── agents/                  # 子代理：code-analyst / test-designer / code-reviewer
+└── commands/                # 8 个工作流命令（工具中立的流程正本）
+ai/
+├── kb/                      # ★ 项目记忆（知识库）
+│   ├── PROJECT-FACTS.md     #   事实卡（带证据，/onboard 填充）
+│   ├── rules/               #   core-contract（对齐填充）· change-safety（免对齐）· mybatis
+│   ├── examples/            #   各层 golden example（从真实代码摘）
+│   ├── decisions/           #   设计取舍记录（ADR-lite）
+│   ├── modules/             #   模块笔记（状态机/隐藏前提/慎动点）
+│   └── lessons.md           #   踩坑教训（review 必读，有保洁规则）
+├── specs/
+│   ├── templates/           #   機能設計書 · 変更設計書 模板
+│   └── def/                 #   DEF 结构契约（YAML 模板：table/screen/api）
+├── testing/                 #   观点目录 · case 格式 · traceability ID 机制
+├── review/checklist.md      #   review 走查清单
+├── tools/verify.sh          #   一键验证（对齐时固化本项目 build/test 命令）
+└── work/<ticket>/           #   案件工作区（impact / plan / testcases）
 ```
 
-- **Staging area = the `ai-infra/` subfolder.** Tools do **not** read it. The template can sit inside your project without affecting anything.
-- **Live area = project root `CLAUDE.md`/`AGENTS.md` + `.github/`.** Tools read this. **Only `promote.sh` writes here**, and it **refuses** unless alignment is finished (`ALIGN_STATE: aligned`).
-- Entry files are **artifacts**, not sources. Change a rule → edit `universal/` or `project/` → re-run `promote.sh`. (Because Copilot can't `import`, assembling from one source keeps all three tools consistent without copy-paste drift.)
+## 使用流程
 
-## Quickstart
+**导入（一次）**：把 `CLAUDE.md`、`AGENTS.md`、`.claude/`、`.github/` 下三件、`ai/` 复制进目标项目根
+（目标已有同名入口文件时手动合并，`/onboard` 会检测并提示）。然后运行 **`/onboard`**：
+AI 勘探事实 → 摘各层真实样例 → 特化核心契约 → **逐条向你裁决 `[assumed]` 项** → 固化 verify.sh 并生效。
 
-```bash
-# 1. Drop the template into an existing project (as an inert subfolder)
-cp -r ai-native-infra  /path/to/your-project/ai-infra
-
-# 2. Run the 5-step alignment pipeline with any of the three agents
-/align-survey     # read real code → project/PROJECT-FACTS.md   (every fact cites file:line)
-/align-extract    # lift golden examples from real code → project/examples/
-/align-draft      # specialize universal rule templates → _staging/ drafts
-/align-review     # tag confirmed / assumed; you only vet the "assumed" items
-/align-activate   # promote.sh assembles & enables the live entry files
-
-# Agent-facing gates: state at task start, verify (aligned build/test) at task end
-bash ai-infra/tools/aci.sh state
-bash ai-infra/tools/aci.sh verify
-
-# Windows (no Git Bash needed): .cmd wrappers embed -ExecutionPolicy Bypass,
-# avoiding "not digitally signed" execution-policy errors (GPO AllSigned aside)
-#   ai-infra\tools\aci.cmd state
-#   ai-infra\activate\promote.cmd
-# Troubleshooting (Unblock-File, GPO AllSigned): see universal/aci/README.md
-
-# Template maintainers can run the deployed-mode smoke suites
-bash tools/smoke-aci.sh
-pwsh -NoProfile -File tools/smoke-aci.ps1
-```
-
-Before activation your project's existing `.github/copilot-instructions.md` (if any) is left untouched; `promote.sh` **backs it up** before writing.
-
-## How the three agents plug in (after alignment)
-
-| Agent | Reads | `promote.sh` assembles |
-|---|---|---|
-| **Claude Code** | root `CLAUDE.md` | core contract + pointers to `ai-infra/universal/prompts` workflows + Claude-specific notes (subagents, verification discipline) |
-| **Codex** | root `AGENTS.md` | the same core contract as a constitution + commands + safety |
-| **GitHub Copilot** | `.github/copilot-instructions.md` (thin) + `.github/instructions/*.instructions.md` (path-scoped) + `.github/prompts/` | condensed contract + per-layer rules + workflow prompt files, and flips `useInstructionFiles` on in `.vscode/settings.json` |
-
-All three share **one** core contract (`project/aligned-rules.md`) — assembled, never hand-copied.
-
-Only using one of them? `promote.sh --tools=copilot` (Windows: `promote.cmd -Tools copilot`) generates just that tool's files and leaves the others untouched.
-
-## What it supports
-
-- **Agent-Computer Interface (ACI)** — SWE-agent-inspired **domain gates** the agent's harness cannot provide natively: alignment state, one-command project verification (`aci.sh verify` → `project/verify.sh`), doc governance, traceability blast-radius search, and evidence checks. Observation stays on the agent's native tools; `find/grep/view` are kept only as bounded fallbacks for shell-only contexts. See `universal/aci/`.
-- **DEF ベース development** — machine-readable *structure* contracts (DB / screen / API / code / message definitions as YAML) that deterministically drive entity, mapper, form, validation, and boundary-test generation. See `universal/defs-model/`.
-- **式様書 (spec)-driven development** — human-readable *behavior* contracts drive routing, business flow, screen transitions, and behavior tests.
-- **Traceability** — stable `{TARGET}-{TYPE}-{NUMBER}` IDs link DEF/spec → test case → executable test → fixture, so an agent can compute the blast radius of any change.
-- **Workflows** — `aci-task-loop`, `spec-to-code`, `spec-to-testcases`, `testcases-to-data`, `testcases-to-junit`, `code-review` (in `universal/prompts/workflow/`).
-
-## Anti-drift guardrails
-
-- **Evidence required** — every architectural/naming claim in `PROJECT-FACTS.md` must cite a real `path:line`; `tools/validate-ai-docs.sh` checks those paths exist.
-- **Confidence tags** — each rule is `[confirmed]` (code-backed) or `[assumed]` (template default, needs sign-off); agents flag `assumed` when they rely on it.
-- **Precedence** — *measured project facts > generic template defaults*, stated explicitly.
-- **Activation gate** — `promote.sh` refuses unless `ALIGN_STATE: aligned`, refuses to run against a non-Java directory, and always backs up existing config first.
-- **Machine-run verification** — `tools/aci.sh verify` runs the build/test command captured during alignment (`project/verify.sh`) with bounded output and an explicit ✓/✗, so "it builds" comes from the machine, not from the agent's prose.
-
-## Layout
+**每个案件**：
 
 ```
-ai-native-infra/
-├── universal/            # reusable, no alignment needed
-│   ├── prompts/align/     #   ★ the 5-step alignment pipeline
-│   ├── prompts/workflow/  #   spec→code / →testcases / →data / →junit / code-review
-│   ├── aci/               #   Agent-Computer Interface guidance
-│   ├── rules-templates/   #   rule templates with {{placeholders}}
-│   ├── testing/  defs-model/  maps/traceability.md
-├── project/              # ★ per-project alignment output (starts as placeholders)
-│   ├── PROJECT-FACTS.md  aligned-rules.md  ALIGN-STATUS.md
-│   ├── instructions/  examples/
-├── _staging/             # review buffer
-├── activate/             # entry-file shells (*.tpl) + promote.sh + settings snippet
-└── tools/validate-ai-docs.sh  aci.sh  smoke-aci.sh   (+ .ps1 twins for Windows)
+式样书（用 ai/specs/templates/ 起草，或读既有定义书）
+   │
+   ▼
+/impact   影响调查（code-analyst 代理，带证据的影响范围报告）
+   ▼
+/plan     実装方針書 → ai/work/<ticket>/plan.md   ← ★ 人 review 承认
+   ▼
+/implement  按方针实装：结构照 DEF、行为照式样书、写法照 examples；verify 收口
+   ▼
+/test-design → /impl-tests   观点走查 → 测试 case → 项目风格 JUnit
+   ▼
+/review   checklist 走查 + 严重度指摘                ← ★ 人定夺
+   ▼
+/remember  经验分拣进 kb（事实/决策/教训/模块笔记）
 ```
 
-**Windows:** `aci.ps1` / `validate-ai-docs.ps1` / `promote.ps1` mirror the shell scripts and run on stock Windows PowerShell 5.1. `promote` expands the `{{ACI}}` placeholder in entry-file templates to the OS-appropriate invocation, so entry files always show runnable commands — re-run the matching promote after switching OS. The per-project verification entry is likewise a pair: `project/verify.sh` / `project/verify.ps1`.
+小改动可跳过 `/plan`；`/impact` 与 verify 收口不可跳。
 
-## New project vs. existing project
+## 关键决策与理由
 
-Each project gets its **own** `project/` (its own facts). A new project = copy the template again and re-run the pipeline. Nothing is shared except `universal/`, so alignments never collide.
+- **子代理只设三个，且分工按「上下文形态」而非「职能全覆盖」**：影响调查（海量只读检索，sonnet 降本）、测试展开（机械走查观点目录，sonnet）、review（需要判断力，继承主模型）。实装方针和编码留在主线程——它们需要与人交互，切子代理只会丢上下文。
+- **命令文件 = 工具中立的流程正本**：`.claude/commands/*.md` 同时是 Claude 的 slash、Codex 的流程说明书（AGENTS.md 指过去）、Copilot 的 prompt 指针目标。一份维护，三处生效。
+- **不用装配/promote 机器**：前身方案用脚本把规则装配进入口文件（附 Windows 镜像脚本，约 1300 行）。本版入口文件天生是薄指针，规则改动即时生效，维护面缩到一个 40 行的 verify.sh。对齐闸门由 shell 检查改为事实卡状态行（`PLACEHOLDER` → 禁止生成业务代码），对 2026 年的 agent 而言 prose 闸门足够可靠，且人可直读。
+- **记忆分四层**：稳定事实（事实卡）、硬规则（rules/）、经验（lessons/decisions/modules）、案件过程产物（work/，可丢弃）。生命周期不同的信息不混放，这是记忆能长期保鲜的前提。
+- **変更設計書与機能設計書分开**：既存改修的核心是「変更前/変更後/影響範囲/回帰観点」，与新規功能的文档形态完全不同——这正是多数 AI 工作流对 brownfield 失效的原因。
 
-## Language
+## 安全底线（摘要，全文见 `ai/kb/rules/change-safety.md`）
 
-Rule/spec content is authored in **Chinese/Japanese** (the target audience is Japanese-enterprise SIer teams doing DEF ベース / 式様書 development). This README is English for discoverability; the mechanism is language-agnostic.
-
-## Research note
-
-The ACI layer is informed by [SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering](https://arxiv.org/abs/2405.15793) — applied selectively. The paper's *observation* lessons (bounded file views, concise search) are already built into the native tools of 2026 agent harnesses (Claude Code / Codex / Copilot), so this repo does **not** ask agents to route observation through wrappers; that would be a de-optimization. What this repo takes from the paper is the other half: agent-facing interfaces should offer a small set of deterministic, domain-specific actions with explicit feedback and guardrails around invalid states — here that means alignment gates, traceability/evidence checks, and one-command verification, applied to brownfield alignment and enterprise Java workflows rather than vendoring SWE-agent itself.
+影响调查先行 · 改公开面必须有式样书依据 · 最小 diff 不夹带重构 · 禁批量脚本重写 ·
+MyBatis 禁 `${}` · fixture 全合成数据 · verify 机器收口 · `[assumed]` 与破坏性操作停下问人。
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE)
