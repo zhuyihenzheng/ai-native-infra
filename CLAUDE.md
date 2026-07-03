@@ -9,10 +9,13 @@
 3. `ai/kb/PROJECT-FACTS.md` — 项目事实卡（每条带 `路径:行号` 证据）
 4. 动手写某层代码前，先看 `ai/kb/examples/` 对应层的真实样例——**对齐样例，不对齐通用惯例**
 
-## 对齐闸门
+## 对齐闸门（机器强制）
 
 `ai/kb/PROJECT-FACTS.md` 头部状态为 `PLACEHOLDER` 时，本项目**尚未对齐**：
 除 `/onboard` 外，不要生成或修改任何业务代码。
+此闸门由 hooks 硬执行（`.claude/settings.json` + `ai/tools/hooks/`）：
+未对齐时对 `src/`、构建文件的编辑会被 PreToolUse hook 直接拦截；
+业务代码改动后未通过 verify 时，Stop hook 会阻止直接收工一次。被拦截时按提示补步骤，不要绕过。
 
 ## 工作流（slash commands）
 

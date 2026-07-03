@@ -1,5 +1,9 @@
 # PROJECT FACTS —（待对齐）
 
+<!-- ALIGN_STATE: not-aligned -->
+<!-- ↑ 机器闸门标记，由 /onboard 第 5 步把值改为 aligned（精确 token，本注释故意不写全）。
+     值不是 aligned 时，PreToolUse hook 硬拦截对业务代码的编辑（ai/tools/hooks/）。 -->
+
 > 状态：`PLACEHOLDER` —— 运行 `/onboard` 后由 AI 用真实代码证据填充。
 > 在那之前本文件不代表任何项目事实，**禁止据此生成代码**。
 > 对齐后状态改为 `ALIGNED @ <日期> @ <commit>`；每条断言带 `路径:行号` 证据并标 `[confirmed]`/`[assumed]`。

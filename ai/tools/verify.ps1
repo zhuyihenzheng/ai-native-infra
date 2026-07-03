@@ -24,6 +24,8 @@ $rc = $LASTEXITCODE
 Get-Content $log -Tail $tailLines
 if ($rc -eq 0) {
   Write-Host "OK verify PASSED"
+  # Stop hook (stop-verify-gate.sh) checks this marker to know the latest edits were verified
+  New-Item -ItemType File -Force (Join-Path $PSScriptRoot '.last-verify-pass') | Out-Null
   Remove-Item $log -Force
   exit 0
 } else {

@@ -22,7 +22,8 @@ AGENTS.md                    # Codex / 通用代理入口（同源精简版）
 └── prompts/                 # Copilot slash（薄指针 → .claude/commands/）
 .claude/
 ├── agents/                  # 子代理：code-analyst / test-designer / code-reviewer
-└── commands/                # 8 个工作流命令（工具中立的流程正本）
+├── commands/                # 8 个工作流命令（工具中立的流程正本）
+└── settings.json            # hooks 注册（机器强制闸门）
 ai/
 ├── kb/                      # ★ 项目记忆（知识库）
 │   ├── PROJECT-FACTS.md     #   事实卡（带证据，/onboard 填充）
@@ -37,7 +38,11 @@ ai/
 ├── testing/                 #   观点目录 · case 格式 · traceability ID 机制
 ├── review/checklist.md      #   review 走查清单
 ├── tools/                   #   一键验证：verify.conf（命令正本）+ verify.sh / verify.cmd（跨 OS 壳）
+│   └── hooks/               #   闸门脚本：pre-edit-gate（对齐强制）· stop-verify-gate（verify 强制）
 └── work/<ticket>/           #   案件工作区（impact / plan / testcases）
+demo/
+├── legacy-order/            # 验证靶场：刻意做旧的受注管理项目（BLogic/画面路由/sqlmap/JUnit4，可编译可测试）
+└── aligned-snapshot/        # 对靶场跑完 /onboard 的标准产出快照（事实卡/契约/样例），用于对比校验
 ```
 
 ## 使用流程
@@ -66,6 +71,23 @@ AI 勘探事实 → 摘各层真实样例 → 特化核心契约 → **逐条向
 ```
 
 小改动可跳过 `/plan`；`/impact` 与 verify 收口不可跳。
+
+## 机器强制层（hooks）
+
+prose 规则会随上下文变长而衰减，所以两条最关键的纪律由 Claude Code hooks 硬执行（`.claude/settings.json`）：
+
+- **对齐闸门**（PreToolUse）：`PROJECT-FACTS.md` 未标 `ALIGN_STATE: aligned` 时，对 `src/`、构建文件的编辑直接被拦截——未对齐的 AI 物理上改不了业务代码。
+- **verify 收口闸门**（Stop）：业务代码有改动、且改动晚于最近一次 verify 通过时，agent 无法直接收工，会被要求先跑 verify（通过标记由 verify.sh/ps1 自动落盘）。
+
+hook 解析失败时放行（fail-open），不会把工作台卡死；Codex/Copilot 无 hook 机制，靠同文规则的 prose 约束。
+
+## 验证靶场（demo/）
+
+`demo/legacy-order/` 是一个可编译、可跑测试的迷你遗留项目，浓缩了真实 SI 系统的典型形态
+（BLogic 模板方法、画面 ID 路由、`sqlmap/` 目录、`STATUS→statusCode` 不规则映射、`${}` 白名单排序、
+JUnit4 手写 stub、字符串拼接 SQL 的坏样例），配套式样书与 DEF。
+`demo/aligned-snapshot/` 是对它跑完 `/onboard` 的标准产出——既是"对齐后长什么样"的活文档，
+也是工作台自身的回归基准：改了 onboard 流程后重跑一遍，diff snapshot 即知有没有退化。
 
 ## 关键决策与理由
 
