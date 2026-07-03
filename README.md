@@ -36,7 +36,7 @@ ai/
 │   └── def/                 #   DEF 结构契约（YAML 模板：table/screen/api）
 ├── testing/                 #   观点目录 · case 格式 · traceability ID 机制
 ├── review/checklist.md      #   review 走查清单
-├── tools/verify.sh          #   一键验证（对齐时固化本项目 build/test 命令）
+├── tools/                   #   一键验证：verify.conf（命令正本）+ verify.sh / verify.cmd（跨 OS 壳）
 └── work/<ticket>/           #   案件工作区（impact / plan / testcases）
 ```
 
@@ -44,7 +44,7 @@ ai/
 
 **导入（一次）**：把 `CLAUDE.md`、`AGENTS.md`、`.claude/`、`.github/` 下三件、`ai/` 复制进目标项目根
 （目标已有同名入口文件时手动合并，`/onboard` 会检测并提示）。然后运行 **`/onboard`**：
-AI 勘探事实 → 摘各层真实样例 → 特化核心契约 → **逐条向你裁决 `[assumed]` 项** → 固化 verify.sh 并生效。
+AI 勘探事实 → 摘各层真实样例 → 特化核心契约 → **逐条向你裁决 `[assumed]` 项** → 固化 verify 命令并生效。
 
 **每个案件**：
 
@@ -71,7 +71,7 @@ AI 勘探事实 → 摘各层真实样例 → 特化核心契约 → **逐条向
 
 - **子代理只设三个，且分工按「上下文形态」而非「职能全覆盖」**：影响调查（海量只读检索，sonnet 降本）、测试展开（机械走查观点目录，sonnet）、review（需要判断力，继承主模型）。实装方针和编码留在主线程——它们需要与人交互，切子代理只会丢上下文。
 - **命令文件 = 工具中立的流程正本**：`.claude/commands/*.md` 同时是 Claude 的 slash、Codex 的流程说明书（AGENTS.md 指过去）、Copilot 的 prompt 指针目标。一份维护，三处生效。
-- **不用装配/promote 机器**：前身方案用脚本把规则装配进入口文件（附 Windows 镜像脚本，约 1300 行）。本版入口文件天生是薄指针，规则改动即时生效，维护面缩到一个 40 行的 verify.sh。对齐闸门由 shell 检查改为事实卡状态行（`PLACEHOLDER` → 禁止生成业务代码），对 2026 年的 agent 而言 prose 闸门足够可靠，且人可直读。
+- **不用装配/promote 机器**：前身方案用脚本把规则装配进入口文件（附 Windows 镜像脚本，约 1300 行）。本版入口文件天生是薄指针，规则改动即时生效，脚本维护面只剩 verify 一组（`verify.conf` 命令正本 + sh/ps1/cmd 三个薄壳，Windows 入口内置 ExecutionPolicy Bypass）。对齐闸门由 shell 检查改为事实卡状态行（`PLACEHOLDER` → 禁止生成业务代码），对 2026 年的 agent 而言 prose 闸门足够可靠，且人可直读。
 - **记忆分四层**：稳定事实（事实卡）、硬规则（rules/）、经验（lessons/decisions/modules）、案件过程产物（work/，可丢弃）。生命周期不同的信息不混放，这是记忆能长期保鲜的前提。
 - **変更設計書与機能設計書分开**：既存改修的核心是「変更前/変更後/影響範囲/回帰観点」，与新規功能的文档形态完全不同——这正是多数 AI 工作流对 brownfield 失效的原因。
 

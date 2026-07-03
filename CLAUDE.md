@@ -35,7 +35,7 @@
 - **项目实测事实 > 通用惯例**。项目用 BLogic 就写 BLogic，不"现代化"遗留结构。
 - **最小 diff**：不顺手格式化、不重命名、不改无关行。
 - 改路由 / public 签名 / SQL 列 / 表结构，必须有式样书或用户明示依据。
-- 收尾必跑 `bash ai/tools/verify.sh`（本项目对齐的 build/test），红/绿如实报告。
+- 收尾必跑 verify（本项目对齐的 build/test）：macOS/Linux `bash ai/tools/verify.sh`，Windows `ai\tools\verify.cmd`。红/绿如实报告。
 - 规则标 `[assumed]` 的，按假设行事并显式提示用户确认。
 - 测试 fixture 全部合成数据，禁止真实个人信息 / 凭证 / 客户数据。
 

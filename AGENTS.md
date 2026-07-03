@@ -25,5 +25,5 @@
 - 项目实测事实 > 通用惯例；贴合现状，不擅自现代化。
 - 最小 diff；不改无关行；不做与任务无关的格式化/重命名。
 - MyBatis 禁 `${}` 拼接（白名单排序列除外）；规则见 `ai/kb/rules/mybatis.md`。
-- 收尾必跑 `bash ai/tools/verify.sh`，如实报告红/绿。
+- 收尾必跑 verify：macOS/Linux `bash ai/tools/verify.sh`，Windows `ai\tools\verify.cmd`。如实报告红/绿。
 - `[assumed]` 规则要提示用户确认；fixture 全合成数据。

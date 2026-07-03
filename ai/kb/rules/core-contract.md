@@ -54,4 +54,4 @@
 
 - build：{{...}}
 - 全量测试：{{...}} / 单模块：{{...}}
-- 一键验证：`bash ai/tools/verify.sh`
+- 一键验证：macOS/Linux `bash ai/tools/verify.sh` / Windows `ai\tools\verify.cmd`（命令正本在 `ai/tools/verify.conf`）

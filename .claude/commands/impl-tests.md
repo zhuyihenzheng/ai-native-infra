@@ -20,5 +20,5 @@ argument-hint: <ticket编号>
 
 ## 收口
 
-跑本项目测试命令（`bash ai/tools/verify.sh` 或事实卡记录的单模块命令），
+跑本项目测试命令（verify：`bash ai/tools/verify.sh` / Windows `ai\tools\verify.cmd`，或事实卡记录的单模块命令），
 红/绿如实报告；失败先判断是**测试写错**还是**实装缺陷**再动手，不为凑绿弱化断言。

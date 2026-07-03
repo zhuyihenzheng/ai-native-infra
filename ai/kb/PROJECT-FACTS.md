@@ -33,7 +33,7 @@
 <!-- 既存 CLAUDE.md / AGENTS.md / copilot-instructions / .cursorrules 逐一列路径，对齐生效前必看 -->
 
 ## 10. 构建与验证命令
-<!-- build / 全量测试 / 单模块测试 / 本地起服务。对齐时固化进 ai/tools/verify.sh -->
+<!-- build / 全量测试 / 单模块测试 / 本地起服务。对齐时固化进 ai/tools/verify.conf（UNIX= / WIN=） -->
 
 ## ⚠️ 待确认 / 矛盾点
 <!-- 所有 [assumed] 与代码内不一致处登记于此；/onboard 第 4 步逐条请用户裁决 -->

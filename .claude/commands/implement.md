@@ -20,7 +20,7 @@ argument-hint: <ticket编号 或 plan.md 路径>
 ## 收口（不可省略）
 
 1. `git diff --stat` 自查：改动文件是否都在方针清单内？有无越界？
-2. 跑 `bash ai/tools/verify.sh`，红/绿如实报告；失败则基于报错最小修复，不顺手改无关区域。
+2. 跑 verify（macOS/Linux: `bash ai/tools/verify.sh`；Windows: `ai\tools\verify.cmd`），红/绿如实报告；失败则基于报错最小修复，不顺手改无关区域。
 3. 报告：改了什么（按层）、traceability ID、verify 结果、与方针的偏差、遗留风险。
 
 代码完成 ≠ 案件完成：提示用户继续 `/test-design`。

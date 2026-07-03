@@ -10,7 +10,7 @@
 - 改路由 / public 签名 / SQL 列 / 表结构，必须有式样书或用户明示依据。
 - MyBatis：强制 `#{}` 绑定，禁止 `${}` 拼接（白名单排序列除外）；XML 与接口对应关系遵守 `ai/kb/rules/mybatis.md`。
 - 测试 fixture 全部合成数据，禁止真实个人信息 / 凭证 / 客户数据。
-- 改动收尾运行 `bash ai/tools/verify.sh`，如实报告结果。
+- 改动收尾运行 verify（macOS/Linux: `bash ai/tools/verify.sh`；Windows: `ai\tools\verify.cmd`），如实报告结果。
 
 ## 分层规则与工作流
 

@@ -22,6 +22,6 @@
 ## 改完之后
 
 9. **越界自查**：`git diff --stat` 对照计划的文件清单，多出来的文件要么有解释要么撤销。
-10. **verify 收口**：跑 `bash ai/tools/verify.sh`，红/绿如实报告。「编译通过」不等于验证；
+10. **verify 收口**：跑 verify（macOS/Linux: `bash ai/tools/verify.sh`；Windows: `ai\tools\verify.cmd`），红/绿如实报告。「编译通过」不等于验证；
     涉及画面/接口的改动按测试方针补行为验证。
 11. **可追溯**：新代码挂 traceability ID 回链式样书；改了式样书/DEF 就全仓搜该 ID，连带更新 testcases/测试/fixture。

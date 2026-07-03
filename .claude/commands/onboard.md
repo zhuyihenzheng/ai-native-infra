@@ -33,7 +33,9 @@ description: 对齐工作台与既存项目：勘探事实 → 摘样例 → 定
 
 ## 第 5 步：生效
 
-1. 把 PROJECT-FACTS 里的构建/测试命令固化进 `ai/tools/verify.sh`（替换占位段），跑一次确认真的通过。
+1. 把 PROJECT-FACTS 里的构建/测试命令固化进 `ai/tools/verify.conf`（`UNIX=` 与 `WIN=` 两行；
+   Windows 命令注意 wrapper 差异如 `mvnw.cmd`/`gradlew.bat`），然后按当前 OS 跑一次 verify
+   （`bash ai/tools/verify.sh` 或 `ai\tools\verify.cmd`）确认真的通过。
 2. 把 `PROJECT-FACTS.md` 头部状态从 `PLACEHOLDER` 改为 `ALIGNED @ <日期> @ <commit>`。
 3. 若目标项目已有自己的 `CLAUDE.md` / `AGENTS.md` / copilot-instructions：**不覆盖**，向用户报告冲突并建议合并方式。
 
