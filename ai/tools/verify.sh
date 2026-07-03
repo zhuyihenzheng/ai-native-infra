@@ -18,6 +18,7 @@ LOG="$(mktemp)"
 if bash -c "$VERIFY_CMD" >"$LOG" 2>&1; then
   tail -n "$TAIL_LINES" "$LOG"
   echo "✓ verify PASSED"
+  touch "$DIR/.last-verify-pass"   # Stop hook（stop-verify-gate.sh）据此判断"改动后已验证"
   rm -f "$LOG"; exit 0
 else
   RC=$?

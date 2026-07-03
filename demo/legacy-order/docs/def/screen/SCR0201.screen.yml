@@ -1,0 +1,26 @@
+# 画面項目定義: 受注一覧（正本。Form/検索条件はこれに従う）
+id: SCR0201
+name: 受注一覧画面
+spec: docs/spec/SCR0201_受注一覧照会.md
+items:
+  - field: keyword
+    label: 得意先名
+    type: string
+    length: 40
+    required: false
+    note: 部分一致
+  - field: statusCode
+    label: 受注ステータス
+    type: code
+    code: ORDER_STATUS
+    required: false
+  - field: pageNo
+    label: ページ番号
+    type: int
+    required: false
+    note: 1始まり。0以下は1として扱う
+  - field: sortKey
+    label: ソートキー
+    type: string
+    required: false
+    note: orderNo / orderDate / amount のみ。リスト外はデフォルト(受注番号)

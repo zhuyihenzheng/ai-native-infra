@@ -1,0 +1,27 @@
+# DB定義: 受注テーブル（正本。Entity/resultMap/DDL はこれに従う）
+table: T_ORDER
+entity: Order
+id: T_ORDER-DB-001
+columns:
+  - col: ORDER_NO
+    field: orderNo
+    type: CHAR(10)
+    pk: true
+    nullable: false
+  - col: CUSTOMER_NAME
+    field: customerName
+    type: VARCHAR(40)
+    nullable: false
+  - col: STATUS
+    field: statusCode        # 歴史的経緯により列名と不一致。変更禁止
+    type: CHAR(2)
+    nullable: false
+    code: ORDER_STATUS       # CodeConst.STATUS_* 参照
+  - col: ORDER_DATE
+    field: orderDate
+    type: DATE
+    nullable: false
+  - col: AMOUNT
+    field: amount
+    type: INT
+    nullable: false

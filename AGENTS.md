@@ -11,6 +11,7 @@
 4. 写某层代码前看 `ai/kb/examples/` 对应样例
 
 `PROJECT-FACTS.md` 状态为 `PLACEHOLDER` 时项目未对齐：先按 `.claude/commands/onboard.md` 的流程对齐，不要直接生成业务代码。
+（在 Claude Code 中此闸门由 hooks 硬执行；其他工具靠本条 prose 约束，请自觉遵守同样的门禁。）
 
 ## 工作流程序书
 

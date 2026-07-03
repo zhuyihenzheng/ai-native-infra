@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:orderdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+
+mybatis:
+  mapper-locations: classpath:sqlmap/*.xml
+  # 列→フィールドは resultMap を正とする（自動 camelCase 変換は使わない）
+  configuration:
+    map-underscore-to-camel-case: false

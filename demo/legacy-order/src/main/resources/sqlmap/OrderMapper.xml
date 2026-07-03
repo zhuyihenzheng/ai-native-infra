@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.order.dao.OrderMapper">
+
+  <!-- 列マッピングの正。STATUS はフィールド statusCode に対応させる（歴史的経緯） -->
+  <resultMap id="orderResultMap" type="com.example.order.entity.Order">
+    <id     column="ORDER_NO"      property="orderNo"/>
+    <result column="CUSTOMER_NAME" property="customerName"/>
+    <result column="STATUS"        property="statusCode"/>
+    <result column="ORDER_DATE"    property="orderDate"/>
+    <result column="AMOUNT"        property="amount"/>
+  </resultMap>
+
+  <sql id="searchCondition">
+    <where>
+      <if test="keyword != null and keyword != ''">
+        CUSTOMER_NAME LIKE '%' || #{keyword} || '%'
+      </if>
+      <if test="statusCode != null and statusCode != ''">
+        AND STATUS = #{statusCode}
+      </if>
+    </where>
+  </sql>
+
+  <select id="countByCondition" parameterType="com.example.order.form.Scr0201Form"
+          resultType="int">
+    SELECT COUNT(*) FROM T_ORDER
+    <include refid="searchCondition"/>
+  </select>
+
+  <!-- ORDER BY の ${sortColumn} は BLogic 側で CodeConst.SORT_WHITELIST により
+       解決済みの物理列名のみが入る。画面入力を直接渡してはならない。 -->
+  <select id="selectByCondition" parameterType="com.example.order.form.Scr0201Form"
+          resultMap="orderResultMap">
+    SELECT ORDER_NO, CUSTOMER_NAME, STATUS, ORDER_DATE, AMOUNT
+    FROM T_ORDER
+    <include refid="searchCondition"/>
+    ORDER BY ${sortColumn}
+    LIMIT #{limit} OFFSET #{offset}
+  </select>
+
+  <select id="selectByKey" resultMap="orderResultMap">
+    SELECT ORDER_NO, CUSTOMER_NAME, STATUS, ORDER_DATE, AMOUNT
+    FROM T_ORDER
+    WHERE ORDER_NO = #{orderNo}
+  </select>
+
+</mapper>

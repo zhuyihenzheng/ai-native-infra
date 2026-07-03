@@ -36,7 +36,9 @@ description: 对齐工作台与既存项目：勘探事实 → 摘样例 → 定
 1. 把 PROJECT-FACTS 里的构建/测试命令固化进 `ai/tools/verify.conf`（`UNIX=` 与 `WIN=` 两行；
    Windows 命令注意 wrapper 差异如 `mvnw.cmd`/`gradlew.bat`），然后按当前 OS 跑一次 verify
    （`bash ai/tools/verify.sh` 或 `ai\tools\verify.cmd`）确认真的通过。
-2. 把 `PROJECT-FACTS.md` 头部状态从 `PLACEHOLDER` 改为 `ALIGNED @ <日期> @ <commit>`。
+2. 把 `PROJECT-FACTS.md` 头部状态从 `PLACEHOLDER` 改为 `ALIGNED @ <日期> @ <commit>`，
+   并把机器标记 `<!-- ALIGN_STATE: not-aligned -->` 改为 `<!-- ALIGN_STATE: aligned -->`
+   （hooks 据此解除对业务代码编辑的硬拦截——精确匹配该 token）。
 3. 若目标项目已有自己的 `CLAUDE.md` / `AGENTS.md` / copilot-instructions：**不覆盖**，向用户报告冲突并建议合并方式。
 
 完成后报告：confirmed/assumed 条数、生成的文件清单、verify 结果。

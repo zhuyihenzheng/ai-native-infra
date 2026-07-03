@@ -3,5 +3,9 @@
 *.swp
 Thumbs.db
 
-# verify 临时日志
+# verify 临时日志与通过标记（hook 用，本机状态不入库）
 ai/tools/*.log
+ai/tools/.last-verify-pass
+
+# 靶场构建产物
+demo/legacy-order/target/
