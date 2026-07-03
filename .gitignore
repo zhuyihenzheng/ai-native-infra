@@ -1,15 +1,7 @@
-# Backups created by promote.sh when it overwrites existing entry files
-_backup-*/
-
-# Staging is a scratch buffer; keep only its README
-_staging/*
-!_staging/README.md
-
 # OS / editor noise
 .DS_Store
 *.swp
 Thumbs.db
 
-# If someone runs the pipeline inside this repo itself, don't commit generated live files
-# (they belong in the *target* project, not the template)
-/CLAUDE.md.local
+# verify 临时日志
+ai/tools/*.log
